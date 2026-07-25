@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPM Executive Management Command Center</title>
+    <title>CPM Team- Management Dashboard</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -110,7 +110,7 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
-                        CPM Command Center <span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-semibold">Executive V3</span>
+                        CPM Team- Management Dashboard <span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-semibold">Executive V3</span>
                     </h1>
                     <p class="text-xs text-slate-400">Real-Time Operational Intelligence Dashboard</p>
                 </div>
@@ -212,7 +212,7 @@
                     <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <i class="fa-solid fa-phone-volume"></i> Calling Operations Overview
                     </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-500">
                             <p class="text-[11px] text-slate-400 font-medium">Total Center Calling</p>
                             <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-calling-centers">0</h4>
@@ -229,6 +229,14 @@
                             <p class="text-[11px] text-slate-400 font-medium">Total Center Setup</p>
                             <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-calling-setup">0</h4>
                         </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-green-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Complete Project</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-complete">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-amber-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Running Project</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-running">0</h4>
+                        </div>
                     </div>
                 </div>
 
@@ -237,7 +245,11 @@
                     <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <i class="fa-solid fa-video"></i> Live Audit Overview
                     </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-purple-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Projects (Live Audit)</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-live-projects">0</h4>
+                        </div>
                         <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-amber-500">
                             <p class="text-[11px] text-slate-400 font-medium">Total Center Live Attempted</p>
                             <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-live-attempted">0</h4>
@@ -270,6 +282,31 @@
                         <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-500">
                             <p class="text-[11px] text-slate-400 font-medium">Total Cam As Per Audit</p>
                             <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-auditcams">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-green-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Audit Done (Centers)</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-audit-done">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-orange-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Audit Pending (Centers)</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-audit-pending">0</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Escalation Tracker Section -->
+                <div>
+                    <h3 class="text-xs font-bold text-red-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Escalation Tracker
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-rose-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Escalation — Center Side</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-esc-center">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-red-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Escalation — Vendor Side</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-esc-vendor">0</h4>
                         </div>
                     </div>
                 </div>
@@ -320,6 +357,14 @@
                     <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-emerald-500">
                         <p class="text-[11px] text-slate-400 font-medium">Total Center Setup</p>
                         <h4 class="text-xl font-bold text-white mt-1" id="kpi-c4">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-green-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Complete Project</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-c-complete">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-amber-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Running Project</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-c-running">0</h4>
                     </div>
                 </div>
 
@@ -448,6 +493,14 @@
                     <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-indigo-500">
                         <p class="text-[11px] text-slate-400 font-medium">Total Cam As Per Audit</p>
                         <h4 class="text-xl font-bold text-white mt-1" id="kpi-ps-auditcam">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-green-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Audit Done (Centers)</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-ps-audit-done">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-orange-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Audit Pending (Centers)</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-ps-audit-pending">0</h4>
                     </div>
                 </div>
 
@@ -843,20 +896,63 @@
             const liveAuditRows = findSheet(data, ['live']);
             const projSubRows = findSheet(data, ['submission', 'project']);
             const empSummaryRows = findSheet(data, ['daily kra']);
+            const escCenterRows = findSheet(data, ['center side']);
+            const escVendorRows = findSheet(data, ['vendor side']);
 
             processCalling(callingRows);
             processLiveAudit(liveAuditRows);
             processProjectSubmission(projSubRows);
             processEmployeeSummary(empSummaryRows);
+            processEscalation(escCenterRows, escVendorRows);
+        }
+
+        // 5. ESCALATION TRACKER MODULE
+        function processEscalation(centerRows, vendorRows) {
+            rawRows.escCenter = centerRows;
+            rawRows.escVendor = vendorRows;
+            renderEscalation();
+        }
+
+        function countEscalationRows(rows, filterKey, label, fixedDateIdx) {
+            if (!rows || rows.length < 2) return 0;
+            const head = rows[0];
+            let dateIdx = (typeof fixedDateIdx === 'number') ? fixedDateIdx : head.findIndex(h => h && h.toString().toLowerCase().includes('date'));
+            let count = 0;
+            let sampleDateVal = null;
+            for (let i = 1; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[0]) continue;
+                if (dateIdx !== -1 && sampleDateVal === null) sampleDateVal = r[dateIdx];
+                if (!inDateRange(dateIdx !== -1 ? r[dateIdx] : null, dateFilters[filterKey].from, dateFilters[filterKey].to)) continue;
+                count++;
+            }
+            console.log(`[CPM Dashboard] Escalation (${label}) — date column index: ${dateIdx}, header at that index: "${dateIdx !== -1 ? head[dateIdx] : 'N/A'}", sample date value: "${sampleDateVal}", rows matched: ${count} of ${rows.length - 1}`);
+            return count;
+        }
+
+        function renderEscalation() {
+            const centerRows = rawRows.escCenter;
+            const vendorRows = rawRows.escVendor;
+
+            const centerCount = countEscalationRows(centerRows, 'escalation', 'Center Side', 2); // Spreadsheet column C — confirmed date column
+            const vendorCount = countEscalationRows(vendorRows, 'escalation', 'Vendor Side');
+
+            console.log('[CPM Dashboard] Escalation Tracker — Center side rows:', centerCount, '| Vendor side rows:', vendorCount);
+            if (centerRows && centerRows.length > 0) console.log('[CPM Dashboard] Escalation (Center Side) header row:', centerRows[0]);
+            if (vendorRows && vendorRows.length > 0) console.log('[CPM Dashboard] Escalation (Vendor Side) header row:', vendorRows[0]);
+
+            document.getElementById('sum-esc-center').innerText = centerCount.toLocaleString();
+            document.getElementById('sum-esc-vendor').innerText = vendorCount.toLocaleString();
         }
 
         // ---- Date range filtering ----
-        let rawRows = { calling: null, liveAudit: null, projSub: null, empSummary: null };
+        let rawRows = { calling: null, liveAudit: null, projSub: null, empSummary: null, escCenter: null, escVendor: null };
         let dateFilters = {
             calling: { from: '', to: '' },
             liveAudit: { from: '', to: '' },
             projSub: { from: '', to: '' },
-            empSummary: { from: '', to: '' }
+            empSummary: { from: '', to: '' },
+            escalation: { from: '', to: '' }
         };
 
         function parseFlexibleDate(val) {
@@ -925,7 +1021,7 @@
         function applyGlobalDateFilter() {
             const from = document.getElementById('date-from-global').value;
             const to = document.getElementById('date-to-global').value;
-            ['calling', 'liveAudit', 'projSub', 'empSummary'].forEach(key => {
+            ['calling', 'liveAudit', 'projSub', 'empSummary', 'escalation'].forEach(key => {
                 const fEl = document.getElementById('date-from-' + key);
                 const tEl = document.getElementById('date-to-' + key);
                 if (fEl) fEl.value = from;
@@ -948,6 +1044,7 @@
             if (key === 'liveAudit') renderLiveAudit();
             if (key === 'projSub') renderProjSub();
             if (key === 'empSummary') renderEmpSummary();
+            if (key === 'escalation') renderEscalation();
         }
 
         // 1. CALLING MODULE
@@ -967,12 +1064,14 @@
             let cctvSetupIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('cctv center setup'));
             let vendorIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('cctv vendor setup'));
             let dateIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('date'));
+            const statusIdx = 12; // Spreadsheet column M — "Project Status"
 
             if (codeIdx === -1) { console.warn('[CPM Dashboard] "Project Code" column not found in Calling sheet — falling back to column index 2. Check sheet headers if numbers look wrong.'); codeIdx = 2; }
             if (centersIdx === -1) { console.warn('[CPM Dashboard] "Total Centers" column not found in Calling sheet — falling back to column index 3.'); centersIdx = 3; }
             if (checkIdx === -1) { console.warn('[CPM Dashboard] "Total Check Centers" column not found in Calling sheet — falling back to column index 4.'); checkIdx = 4; }
             if (cctvSetupIdx === -1) { console.warn('[CPM Dashboard] "CCTV Center Setup" column not found in Calling sheet — falling back to column index 5.'); cctvSetupIdx = 5; }
             if (vendorIdx === -1) { console.warn('[CPM Dashboard] "CCTV Vendor Setup" column not found in Calling sheet — falling back to column index 6.'); vendorIdx = 6; }
+            console.log('[CPM Dashboard] Calling sheet — column M (index 12) header is:', head[statusIdx], '— should read "Project Status". If not, tell me the correct column letter.');
 
             let headHtml = `<tr>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-left">SR NO.</th>
@@ -981,12 +1080,14 @@
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTER - CS CONNECT</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CCTV CENTER SETUP</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CCTV VENDOR SETUP</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">PROJECT STATUS</th>
             </tr>`;
             document.getElementById('head-calling').innerHTML = headHtml;
 
             let dataRows = [];
             let sumCenters = 0, sumConf = 0, sumSetup = 0, sumVendor = 0;
             let uniqueProjects = new Set();
+            let completeProjects = 0, runningProjects = 0;
 
             for (let i = 1; i < rows.length; i++) {
                 let r = rows[i];
@@ -1005,6 +1106,10 @@
                 sumConf += Number(r[checkIdx]) || 0;
                 sumSetup += Number(r[cctvSetupIdx]) || 0;
                 sumVendor += Number(r[vendorIdx]) || 0;
+
+                const statusText = (r[statusIdx] || '').toString().trim().toLowerCase();
+                if (statusText.includes('complete') || statusText.includes('done')) completeProjects++;
+                else if (statusText.includes('running') || statusText.includes('pending') || statusText.includes('progress')) runningProjects++;
             }
 
             dataRows.reverse();
@@ -1018,6 +1123,7 @@
                     <td class="p-3 border-b border-slate-800/50 text-right">${r[checkIdx] !== undefined ? r[checkIdx] : 0}</td>
                     <td class="p-3 border-b border-slate-800/50 text-right">${r[cctvSetupIdx] !== undefined ? r[cctvSetupIdx] : 0}</td>
                     <td class="p-3 border-b border-slate-800/50 text-right">${r[vendorIdx] !== undefined ? r[vendorIdx] : 0}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right">${r[statusIdx] || ''}</td>
                 </tr>`;
             });
 
@@ -1027,6 +1133,7 @@
                 <td class="p-3 border-b border-slate-800 text-right">${sumConf.toLocaleString()}</td>
                 <td class="p-3 border-b border-slate-800 text-right">${sumSetup.toLocaleString()}</td>
                 <td class="p-3 border-b border-slate-800 text-right">${sumVendor.toLocaleString()}</td>
+                <td class="p-3 border-b border-slate-800 text-right"></td>
             </tr>`;
 
             document.getElementById('body-calling').innerHTML = bodyHtml;
@@ -1036,11 +1143,15 @@
             document.getElementById('kpi-c2').innerText = sumConf.toLocaleString();
             document.getElementById('kpi-c3').innerText = sumVendor.toLocaleString();
             document.getElementById('kpi-c4').innerText = sumSetup.toLocaleString();
+            document.getElementById('kpi-c-complete').innerText = completeProjects;
+            document.getElementById('kpi-c-running').innerText = runningProjects;
 
             document.getElementById('sum-calling-centers').innerText = sumCenters.toLocaleString();
             document.getElementById('sum-calling-conf').innerText = sumConf.toLocaleString();
             document.getElementById('sum-calling-vendor').innerText = sumVendor.toLocaleString();
             document.getElementById('sum-calling-setup').innerText = sumSetup.toLocaleString();
+            document.getElementById('sum-proj-complete').innerText = completeProjects;
+            document.getElementById('sum-proj-running').innerText = runningProjects;
         }
 
         // 2. LIVE AUDIT MODULE
@@ -1126,6 +1237,7 @@
 
             document.getElementById('sum-live-attempted').innerText = totAttempted.toLocaleString();
             document.getElementById('sum-live-escalated').innerText = totEsc.toLocaleString();
+            document.getElementById('sum-live-projects').innerText = uniqueProjects.size;
         }
 
         // 3. PROJECT SUBMISSION MODULE
@@ -1149,7 +1261,10 @@
                 let idx = head.findIndex(h => h && h.toString().toLowerCase().includes(tc));
                 indices.push(idx);
             });
-            let dateIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('date'));
+            let dateIdx = 2; // Spreadsheet column C — confirmed date column
+
+            console.log('[CPM Dashboard] Project Submission RAW HEADER ROW:', head.map((h, i) => `[${i}] "${h}"`));
+            console.log('[CPM Dashboard] Project Submission column detection:', targetCols.map((tc, i) => `${tc} => index ${indices[i]}`), '| dateIdx:', dateIdx);
 
             let headHtml = "<tr>";
             targetCols.forEach((tc, i) => {
@@ -1163,6 +1278,9 @@
             let dataRows = [];
             let uniqueProjCodes = new Set();
             let sumUniqCenters = 0, sumIdle = 0, sumAuditCams = 0;
+            let auditDoneCenters = 0, auditPendingCenters = 0;
+            const auditDoneIdx = 12; // Spreadsheet column M — "Audit Done" (centers)
+            const auditPendingIdx = 13; // Spreadsheet column N — "Audit Pending" (centers)
 
             for (let i = 1; i < rows.length; i++) {
                 let r = rows[i];
@@ -1178,8 +1296,14 @@
                     sumUniqCenters += Number(r[indices[2]]) || 0;
                     sumIdle += Number(r[indices[3]]) || 0;
                     sumAuditCams += Number(r[indices[4]]) || 0;
+
+                    auditDoneCenters += Number(r[auditDoneIdx]) || 0;
+                    auditPendingCenters += Number(r[auditPendingIdx]) || 0;
                 }
             }
+
+            console.log('[CPM Dashboard] Project Submission — column M (index 12) header:', head[auditDoneIdx], '| column N (index 13) header:', head[auditPendingIdx], '— should read "Audit Done" and "Audit Pending". If swapped or wrong, tell me the correct column letters.');
+            console.log('[CPM Dashboard] Project Submission — Audit Done centers:', auditDoneCenters, '| Audit Pending centers:', auditPendingCenters);
 
             dataRows.reverse();
 
@@ -1202,11 +1326,15 @@
             document.getElementById('kpi-ps-uniq-centers').innerText = sumUniqCenters.toLocaleString();
             document.getElementById('kpi-ps-idle').innerText = sumIdle.toLocaleString();
             document.getElementById('kpi-ps-auditcam').innerText = sumAuditCams.toLocaleString();
+            document.getElementById('kpi-ps-audit-done').innerText = auditDoneCenters.toLocaleString();
+            document.getElementById('kpi-ps-audit-pending').innerText = auditPendingCenters.toLocaleString();
 
             document.getElementById('sum-proj-unique').innerText = totalUniqueProjects;
             document.getElementById('sum-proj-centers').innerText = sumUniqCenters.toLocaleString();
             document.getElementById('sum-proj-idle').innerText = sumIdle.toLocaleString();
             document.getElementById('sum-proj-auditcams').innerText = sumAuditCams.toLocaleString();
+            document.getElementById('sum-proj-audit-done').innerText = auditDoneCenters.toLocaleString();
+            document.getElementById('sum-proj-audit-pending').innerText = auditPendingCenters.toLocaleString();
         }
 
         // 4. EMPLOYEE SUMMARY MODULE
