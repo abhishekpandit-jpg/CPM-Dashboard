@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPM Executive Management Command Center</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f19; color: #f1f5f9; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .active-tab {
+            background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Top Horizontal Scrollbar Styling */
+        .top-scroll-wrapper {
+            overflow-x: auto !important;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #6366f1 #1e293b;
+        }
+        .top-scroll-wrapper::-webkit-scrollbar { height: 10px; }
+        .top-scroll-wrapper::-webkit-scrollbar-track { background: #0f172a; border-radius: 6px; }
+        .top-scroll-wrapper::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 6px; border: 2px solid #0f172a; }
+        .top-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+        /* Hide bottom scrollbar on standard container */
+        .custom-scroll {
+            overflow-x: auto !important;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE 10+ */
+        }
+        .custom-scroll::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        /* Skeleton loading shimmer for KPI values on first load */
+        .kpi-loading {
+            display: inline-block;
+            width: 3.5rem;
+            height: 1.1em;
+            border-radius: 6px;
+            background: linear-gradient(90deg, rgba(99,102,241,0.15) 25%, rgba(99,102,241,0.35) 50%, rgba(99,102,241,0.15) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Table search input */
+        .table-search {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .table-search:focus { outline: none; border-color: #6366f1; }
+
+        /* Export button */
+        .export-btn { transition: all 0.15s; }
+        .export-btn:hover { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); }
+
+        /* Error banner */
+        #error-banner { transition: all 0.3s ease; }
+
+        .chart-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.08); }
+
+        /* Pulse KPI numbers while the very first fetch is still pending */
+        body.loading [id^="kpi-"], body.loading [id^="sum-"], body.loading [id^="top-emp-"] {
+            animation: pulseFade 1.1s ease-in-out infinite;
+        }
+        @keyframes pulseFade { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased loading">
+
+    <!-- Top Command Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-[1750px] mx-auto px-6 py-3.5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-indigo-500/20 border border-indigo-500/30 rounded-xl shadow-inner">
+                    <i class="fa-solid fa-chart-pie text-indigo-400 text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
+                        CPM Command Center <span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-semibold">Executive V3</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Real-Time Operational Intelligence Dashboard</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-3 py-1.5 rounded-full font-semibold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="sync-text">Live Sync Active</span>
+                </div>
+                <button onclick="fetchLiveData()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex items-center gap-2">
+                    <i class="fa-solid fa-arrows-rotate text-xs" id="refresh-icon"></i>
+                    <span>Sync Sheet</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sub Status Line -->
+    <div class="bg-slate-900/50 border-b border-slate-800/60 px-6 py-2 text-xs text-slate-400">
+        <div class="max-w-[1750px] mx-auto flex justify-between items-center">
+            <span class="flex items-center gap-2">
+                <i class="fa-solid fa-server text-indigo-400"></i>
+                <span id="status-info">Connecting to Google Sheet...</span>
+            </span>
+            <span id="last-sync-time" class="font-medium">Last Sync: Checking...</span>
+        </div>
+    </div>
+
+    <!-- Error Banner (hidden by default) -->
+    <div id="error-banner" class="hidden bg-rose-500/10 border-b border-rose-500/30 px-6 py-2.5">
+        <div class="max-w-[1750px] mx-auto flex items-center justify-between gap-3">
+            <span class="text-xs text-rose-300 font-medium flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span id="error-text">Unable to reach the data source.</span>
+            </span>
+            <div class="flex items-center gap-2">
+                <span class="text-[11px] text-rose-400/80" id="retry-countdown"></span>
+                <button onclick="fetchLiveData()" class="text-[11px] font-semibold text-rose-300 border border-rose-500/40 rounded-lg px-2.5 py-1 hover:bg-rose-500/20">Retry Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="max-w-[1750px] mx-auto px-6 py-6 flex-1 flex flex-col md:flex-row gap-6 w-full">
+
+        <!-- Navigation Sidebar -->
+        <aside class="w-full md:w-72 glass-panel rounded-2xl p-4 flex-shrink-0 h-fit space-y-3">
+            <div class="px-2 pt-1">
+                <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Executive Views</h2>
+            </div>
+            
+            <nav class="space-y-1.5">
+                <button onclick="switchTab('tabSummary')" id="btn-tabSummary" class="tab-btn active-tab w-full text-left px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all">
+                    <span class="flex items-center"><i class="fa-solid fa-sliders text-indigo-400 mr-3 text-sm"></i> Executive Summary</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+                <button onclick="switchTab('tabCalling')" id="btn-tabCalling" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800/60 flex items-center justify-between transition-all">
+                    <span class="flex items-center"><i class="fa-solid fa-phone-volume text-indigo-400 mr-3 text-sm"></i> CPM-Calling</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+                <button onclick="switchTab('tabLiveAudit')" id="btn-tabLiveAudit" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800/60 flex items-center justify-between transition-all">
+                    <span class="flex items-center"><i class="fa-solid fa-video text-indigo-400 mr-3 text-sm"></i> CPM-Live Audit</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+                <button onclick="switchTab('tabProjectSub')" id="btn-tabProjectSub" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800/60 flex items-center justify-between transition-all">
+                    <span class="flex items-center"><i class="fa-solid fa-folder-tree text-indigo-400 mr-3 text-sm"></i> CPM-Project Submission</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+                <button onclick="switchTab('tabEmpSummary')" id="btn-tabEmpSummary" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800/60 flex items-center justify-between transition-all">
+                    <span class="flex items-center"><i class="fa-solid fa-users text-indigo-400 mr-3 text-sm"></i> Employee Summary</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 space-y-6 min-w-0">
+
+            <!-- 1. EXECUTIVE SUMMARY TAB -->
+            <section id="tabSummary" class="tab-content block space-y-6">
+                <!-- Global Date Range -->
+                <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-end gap-3">
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">From</label>
+                        <input type="date" id="date-from-global" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">To</label>
+                        <input type="date" id="date-to-global" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <button onclick="applyGlobalDateFilter()" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply to All Modules</button>
+                    <button onclick="clearGlobalDateFilter()" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear All</button>
+                    <span class="text-[10px] text-slate-500">Applies the same range across every tab's date column, where one exists.</span>
+                </div>
+
+                <!-- Calling Section -->
+                <div>
+                    <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-phone-volume"></i> Calling Operations Overview
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Center Calling</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-calling-centers">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-blue-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Center - CS connect</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-calling-conf">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-cyan-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Vendor Setup</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-calling-vendor">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-emerald-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Center Setup</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-calling-setup">0</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Audit Section -->
+                <div>
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-video"></i> Live Audit Overview
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-amber-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Center Live Attempted</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-live-attempted">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-rose-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Number of Cases Escalated</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-live-escalated">0</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Submission Section -->
+                <div>
+                    <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-folder-tree"></i> Project Submission Summary
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-purple-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Projects (Unique Code)</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-unique">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-teal-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Centers (Unique Centers)</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-centers">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-rose-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Idle Cams</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-idle">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Cam As Per Audit</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-auditcams">0</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Analytics -->
+                <div>
+                    <h3 class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column"></i> Visual Analytics
+                    </h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div class="chart-card p-4 rounded-2xl lg:col-span-2">
+                            <p class="text-[11px] text-slate-400 font-semibold mb-3">Calling Ops vs Project Submission — Coverage</p>
+                            <div class="h-64"><canvas id="chart-coverage"></canvas></div>
+                        </div>
+                        <div class="chart-card p-4 rounded-2xl">
+                            <p class="text-[11px] text-slate-400 font-semibold mb-3">Live Audit — Issue Breakdown</p>
+                            <div class="h-64"><canvas id="chart-audit"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 mt-4">
+                        <div class="chart-card p-4 rounded-2xl">
+                            <p class="text-[11px] text-slate-400 font-semibold mb-3">Employee Performance Leaderboard (Top Scores by Category)</p>
+                            <div class="h-72"><canvas id="chart-employees"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. CPM CALLING TAB -->
+            <section id="tabCalling" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-purple-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Projects</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-c-proj">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-indigo-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Center Calling</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-c1">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-blue-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Center - CS connect</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-c2">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-cyan-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Vendor Setup</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-c3">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-emerald-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Center Setup</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-c4">0</h4>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-end gap-3">
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">From</label>
+                        <input type="date" id="date-from-calling" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">To</label>
+                        <input type="date" id="date-to-calling" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <button onclick="applyDateFilter('calling')" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply</button>
+                    <button onclick="clearDateFilter('calling')" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear</button>
+                    <span class="text-[10px] text-slate-500">Filters by this sheet's date column, if one exists.</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
+                    <div class="relative flex-1 max-w-xs">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="search-calling" oninput="filterTable('calling')" placeholder="Search project code..." class="table-search w-full text-xs rounded-xl pl-8 pr-3 py-2 text-white placeholder-slate-500">
+                    </div>
+                    <button onclick="exportTableCSV('calling', 'CPM_Calling')" class="export-btn glass-panel text-[11px] font-semibold text-slate-300 px-3 py-2 rounded-xl flex items-center gap-2 self-start sm:self-auto">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i> Export CSV
+                    </button>
+                </div>
+                <div class="glass-panel rounded-2xl overflow-hidden border border-slate-800 p-2">
+                    <!-- Top Scroll Bar -->
+                    <div class="top-scroll-wrapper id-scroll-calling-top">
+                        <div class="dummy-space h-1"></div>
+                    </div>
+                    <div class="custom-scroll max-h-[600px] id-scroll-calling-body">
+                        <table class="w-full text-left border-collapse text-xs min-w-[700px]">
+                            <thead class="bg-slate-900 text-slate-300 font-bold uppercase sticky top-0 z-10" id="head-calling"></thead>
+                            <tbody id="body-calling" class="divide-y divide-slate-800/60"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. CPM LIVE AUDIT TAB -->
+            <section id="tabLiveAudit" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-purple-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Total Projects</p>
+                        <h4 class="text-lg font-bold text-purple-400 mt-0.5" id="kpi-la-proj">0</h4>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-amber-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Discussion</p>
+                        <h4 class="text-lg font-bold text-amber-400 mt-0.5" id="kpi-la-discussion">0</h4>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-rose-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Sneaking</p>
+                        <h4 class="text-lg font-bold text-rose-400 mt-0.5" id="kpi-la-sneaking">0</h4>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-red-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Chits</p>
+                        <h4 class="text-lg font-bold text-red-400 mt-0.5" id="kpi-la-chits">0</h4>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-cyan-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Electronic Gadgets</p>
+                        <h4 class="text-lg font-bold text-cyan-400 mt-0.5" id="kpi-la-gadgets">0</h4>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-blue-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Invigilator</p>
+                        <h4 class="text-lg font-bold text-blue-400 mt-0.5" id="kpi-la-invigilator">0</h4>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-indigo-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Total Escalated</p>
+                        <h4 class="text-lg font-bold text-indigo-400 mt-0.5" id="kpi-la-total">0</h4>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-end gap-3">
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">From</label>
+                        <input type="date" id="date-from-liveAudit" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">To</label>
+                        <input type="date" id="date-to-liveAudit" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <button onclick="applyDateFilter('liveAudit')" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply</button>
+                    <button onclick="clearDateFilter('liveAudit')" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear</button>
+                    <span class="text-[10px] text-slate-500">Filters by this sheet's date column, if one exists.</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
+                    <div class="relative flex-1 max-w-xs">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="search-liveAudit" oninput="filterTable('liveAudit')" placeholder="Search project code..." class="table-search w-full text-xs rounded-xl pl-8 pr-3 py-2 text-white placeholder-slate-500">
+                    </div>
+                    <button onclick="exportTableCSV('liveAudit', 'CPM_Live_Audit')" class="export-btn glass-panel text-[11px] font-semibold text-slate-300 px-3 py-2 rounded-xl flex items-center gap-2 self-start sm:self-auto">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i> Export CSV
+                    </button>
+                </div>
+                <div class="glass-panel rounded-2xl overflow-hidden border border-slate-800 p-2">
+                    <!-- Top Scroll Bar -->
+                    <div class="top-scroll-wrapper id-scroll-liveAudit-top">
+                        <div class="dummy-space h-1"></div>
+                    </div>
+                    <div class="custom-scroll max-h-[600px] id-scroll-liveAudit-body">
+                        <table class="w-full text-left border-collapse text-xs min-w-[850px]">
+                            <thead class="bg-slate-900 text-slate-300 font-bold uppercase sticky top-0 z-10" id="head-liveAudit"></thead>
+                            <tbody id="body-liveAudit" class="divide-y divide-slate-800/60"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. CPM PROJECT SUBMISSION TAB -->
+            <section id="tabProjectSub" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-purple-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Projects (Unique)</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-ps-uniq-proj">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-teal-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Centers (Unique Centers)</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-ps-uniq-centers">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-rose-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Idle Cam</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-ps-idle">0</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-indigo-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Cam As Per Audit</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-ps-auditcam">0</h4>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-end gap-3">
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">From</label>
+                        <input type="date" id="date-from-projSub" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">To</label>
+                        <input type="date" id="date-to-projSub" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <button onclick="applyDateFilter('projSub')" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply</button>
+                    <button onclick="clearDateFilter('projSub')" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear</button>
+                    <span class="text-[10px] text-slate-500">Filters by this sheet's date column, if one exists.</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
+                    <div class="relative flex-1 max-w-xs">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="search-projSub" oninput="filterTable('projSub')" placeholder="Search project or client..." class="table-search w-full text-xs rounded-xl pl-8 pr-3 py-2 text-white placeholder-slate-500">
+                    </div>
+                    <button onclick="exportTableCSV('projSub', 'CPM_Project_Submission')" class="export-btn glass-panel text-[11px] font-semibold text-slate-300 px-3 py-2 rounded-xl flex items-center gap-2 self-start sm:self-auto">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i> Export CSV
+                    </button>
+                </div>
+                <div class="glass-panel rounded-2xl overflow-hidden border border-slate-800 p-2">
+                    <!-- Top Scroll Bar -->
+                    <div class="top-scroll-wrapper id-scroll-projSub-top">
+                        <div class="dummy-space h-1"></div>
+                    </div>
+                    <div class="custom-scroll max-h-[600px] id-scroll-projSub-body">
+                        <table class="w-full text-left border-collapse text-xs min-w-[900px]">
+                            <thead class="bg-slate-900 text-slate-300 font-bold uppercase sticky top-0 z-10" id="head-projSub"></thead>
+                            <tbody id="body-projSub" class="divide-y divide-slate-800/60"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. EMPLOYEE SUMMARY TAB -->
+            <section id="tabEmpSummary" class="tab-content hidden space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                    <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-l-indigo-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Top Calling</p>
+                        <h5 class="text-xs font-bold text-indigo-300 mt-1 truncate" id="top-emp-calling-name">-</h5>
+                        <p class="text-lg font-extrabold text-white" id="top-emp-calling-val">0</p>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-l-blue-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Top Fresh Audit</p>
+                        <h5 class="text-xs font-bold text-blue-300 mt-1 truncate" id="top-emp-fresh-name">-</h5>
+                        <p class="text-lg font-extrabold text-white" id="top-emp-fresh-val">0</p>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-l-cyan-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Top Cross Audit</p>
+                        <h5 class="text-xs font-bold text-cyan-300 mt-1 truncate" id="top-emp-cross-name">-</h5>
+                        <p class="text-lg font-extrabold text-white" id="top-emp-cross-val">0</p>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-l-amber-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Top Live Audit</p>
+                        <h5 class="text-xs font-bold text-amber-300 mt-1 truncate" id="top-emp-live-name">-</h5>
+                        <p class="text-lg font-extrabold text-white" id="top-emp-live-val">0</p>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-l-emerald-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Top CSR Audit</p>
+                        <h5 class="text-xs font-bold text-emerald-300 mt-1 truncate" id="top-emp-csr-name">-</h5>
+                        <p class="text-lg font-extrabold text-white" id="top-emp-csr-val">0</p>
+                    </div>
+                    <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-l-rose-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Top Alert Marking</p>
+                        <h5 class="text-xs font-bold text-rose-300 mt-1 truncate" id="top-emp-alert-name">-</h5>
+                        <p class="text-lg font-extrabold text-white" id="top-emp-alert-val">0</p>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-end gap-3">
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">From</label>
+                        <input type="date" id="date-from-empSummary" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">To</label>
+                        <input type="date" id="date-to-empSummary" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <button onclick="applyDateFilter('empSummary')" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply</button>
+                    <button onclick="clearDateFilter('empSummary')" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear</button>
+                    <span class="text-[10px] text-slate-500">Sourced from Daily KRA — shows entries within this range; date-wise accurate.</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
+                    <div class="relative flex-1 max-w-xs">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="search-empSummary" oninput="filterTable('empSummary')" placeholder="Search employee name..." class="table-search w-full text-xs rounded-xl pl-8 pr-3 py-2 text-white placeholder-slate-500">
+                    </div>
+                    <button onclick="exportTableCSV('empSummary', 'CPM_Employee_Summary')" class="export-btn glass-panel text-[11px] font-semibold text-slate-300 px-3 py-2 rounded-xl flex items-center gap-2 self-start sm:self-auto">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i> Export CSV
+                    </button>
+                </div>
+                <div class="glass-panel rounded-2xl overflow-hidden border border-slate-800 p-2">
+                    <!-- Top Scroll Bar -->
+                    <div class="top-scroll-wrapper id-scroll-empSummary-top">
+                        <div class="dummy-space h-1"></div>
+                    </div>
+                    <div class="custom-scroll max-h-[600px] id-scroll-empSummary-body">
+                        <table class="w-full text-left border-collapse text-xs min-w-[2000px]">
+                            <thead class="bg-slate-900 text-slate-300 font-bold uppercase sticky top-0 z-10" id="head-empSummary"></thead>
+                            <tbody id="body-empSummary" class="divide-y divide-slate-800/60"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- JavaScript Logic Engine -->
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwXA2u6L1PR3gIv-prODY4yrGU94ArzrC-ajqx5aeeTYz_LTf2iMcsRI4wkwFa3Z6Yn/exec";
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('active-tab');
+                el.classList.add('text-slate-300');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('active-tab');
+                activeBtn.classList.remove('text-slate-300');
+            }
+
+            // Sync top scrollbar widths when switching tabs
+            setTimeout(syncScrollbars, 50);
+        }
+
+        function setupScrollSync(topClass, bodyClass) {
+            const top = document.querySelector('.' + topClass);
+            const body = document.querySelector('.' + bodyClass);
+            if (!top || !body) return;
+
+            const dummy = top.querySelector('.dummy-space');
+            const table = body.querySelector('table');
+
+            if (table && dummy) {
+                dummy.style.width = table.offsetWidth + 'px';
+            }
+
+            let isSyncingTop = false;
+            let isSyncingBody = false;
+
+            top.onscroll = function() {
+                if (!isSyncingTop) {
+                    isSyncingBody = true;
+                    body.scrollLeft = top.scrollLeft;
+                }
+                isSyncingTop = false;
+            };
+
+            body.onscroll = function() {
+                if (!isSyncingBody) {
+                    isSyncingTop = true;
+                    top.scrollLeft = body.scrollLeft;
+                }
+                isSyncingBody = false;
+            };
+        }
+
+        function syncScrollbars() {
+            setupScrollSync('id-scroll-calling-top', 'id-scroll-calling-body');
+            setupScrollSync('id-scroll-liveAudit-top', 'id-scroll-liveAudit-body');
+            setupScrollSync('id-scroll-projSub-top', 'id-scroll-projSub-body');
+            setupScrollSync('id-scroll-empSummary-top', 'id-scroll-empSummary-body');
+        }
+
+        let retryTimer = null;
+        let retryCountdownInterval = null;
+
+        function hideErrorBanner() {
+            document.getElementById('error-banner').classList.add('hidden');
+            if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+            if (retryCountdownInterval) { clearInterval(retryCountdownInterval); retryCountdownInterval = null; }
+        }
+
+        function showErrorBanner(message) {
+            document.getElementById('error-banner').classList.remove('hidden');
+            document.getElementById('error-text').innerText = message;
+
+            // Auto-retry in 15s with a visible countdown, so a failed sync doesn't sit silently for 5 minutes
+            let secondsLeft = 15;
+            const countdownEl = document.getElementById('retry-countdown');
+            countdownEl.innerText = `Retrying in ${secondsLeft}s`;
+            if (retryCountdownInterval) clearInterval(retryCountdownInterval);
+            retryCountdownInterval = setInterval(() => {
+                secondsLeft -= 1;
+                if (secondsLeft <= 0) { clearInterval(retryCountdownInterval); return; }
+                countdownEl.innerText = `Retrying in ${secondsLeft}s`;
+            }, 1000);
+
+            if (retryTimer) clearTimeout(retryTimer);
+            retryTimer = setTimeout(fetchLiveData, 15000);
+        }
+
+        async function fetchLiveData() {
+            const icon = document.getElementById('refresh-icon');
+            const status = document.getElementById('status-info');
+            icon.classList.add('fa-spin');
+            status.innerText = "Fetching live spreadsheet data...";
+
+            try {
+                const res = await fetch(API_URL);
+                if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+                const data = await res.json();
+
+                status.innerText = "All modules synced successfully!";
+                document.getElementById('last-sync-time').innerText = "Last Sync: " + new Date().toLocaleTimeString();
+
+                processDashboardData(data);
+                renderCharts();
+                syncScrollbars();
+                hideErrorBanner();
+                document.body.classList.remove('loading');
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                status.innerText = "Sync failed — showing last known data.";
+                showErrorBanner("Couldn't reach the data source. Numbers on screen may be stale.");
+            } finally {
+                icon.classList.remove('fa-spin');
+            }
+        }
+
+        // ---- Table search/filter ----
+        function filterTable(key) {
+            const input = document.getElementById('search-' + key);
+            const term = input.value.trim().toLowerCase();
+            const tbody = document.getElementById('body-' + key);
+            if (!tbody) return;
+            Array.from(tbody.rows).forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        }
+
+        // ---- CSV export (respects current search filter) ----
+        function exportTableCSV(key, filename) {
+            const head = document.getElementById('head-' + key);
+            const body = document.getElementById('body-' + key);
+            if (!head || !body) return;
+
+            const escapeCSV = (val) => `"${String(val).replace(/"/g, '""')}"`;
+            const rows = [];
+
+            const headerCells = Array.from(head.querySelectorAll('th')).map(th => escapeCSV(th.innerText));
+            rows.push(headerCells.join(','));
+
+            Array.from(body.rows).forEach(row => {
+                if (row.style.display === 'none') return; // skip filtered-out rows
+                const cells = Array.from(row.cells).map(td => escapeCSV(td.innerText));
+                rows.push(cells.join(','));
+            });
+
+            const csvContent = rows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${filename}_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ---- Charts ----
+        let charts = { coverage: null, audit: null, employees: null };
+        const chartTextColor = '#94a3b8';
+        const chartGridColor = 'rgba(255,255,255,0.06)';
+
+        function renderCharts() {
+            renderCoverageChart();
+            renderAuditChart();
+            renderEmployeeChart();
+        }
+
+        function num(id) {
+            const el = document.getElementById(id);
+            if (!el) return 0;
+            return Number(el.innerText.replace(/,/g, '')) || 0;
+        }
+
+        function renderCoverageChart() {
+            const ctx = document.getElementById('chart-coverage');
+            if (!ctx || typeof Chart === 'undefined') return;
+            const data = {
+                labels: ['Total Centers', 'CS Connect', 'Vendor Setup', 'Center Setup', 'Unique Centers (Submission)', 'Idle Cams', 'Cam As Per Audit'],
+                datasets: [{
+                    label: 'Count',
+                    data: [num('sum-calling-centers'), num('sum-calling-conf'), num('sum-calling-vendor'), num('sum-calling-setup'), num('sum-proj-centers'), num('sum-proj-idle'), num('sum-proj-auditcams')],
+                    backgroundColor: ['#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#14b8a6', '#f43f5e', '#818cf8'],
+                    borderRadius: 6,
+                    maxBarThickness: 36
+                }]
+            };
+            if (charts.coverage) { charts.coverage.data = data; charts.coverage.update(); return; }
+            charts.coverage = new Chart(ctx, {
+                type: 'bar',
+                data,
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: chartTextColor, font: { size: 10 } }, grid: { display: false } },
+                        y: { ticks: { color: chartTextColor }, grid: { color: chartGridColor }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderAuditChart() {
+            const ctx = document.getElementById('chart-audit');
+            if (!ctx || typeof Chart === 'undefined') return;
+            const data = {
+                labels: ['Discussion', 'Sneaking', 'Chits', 'Electronic Gadgets', 'Invigilator'],
+                datasets: [{
+                    data: [num('kpi-la-discussion'), num('kpi-la-sneaking'), num('kpi-la-chits'), num('kpi-la-gadgets'), num('kpi-la-invigilator')],
+                    backgroundColor: ['#f59e0b', '#f43f5e', '#ef4444', '#06b6d4', '#3b82f6'],
+                    borderColor: '#0b0f19', borderWidth: 2
+                }]
+            };
+            if (charts.audit) { charts.audit.data = data; charts.audit.update(); return; }
+            charts.audit = new Chart(ctx, {
+                type: 'doughnut',
+                data,
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: chartTextColor, boxWidth: 10, font: { size: 10 } } } }
+                }
+            });
+        }
+
+        function renderEmployeeChart() {
+            const ctx = document.getElementById('chart-employees');
+            if (!ctx || typeof Chart === 'undefined') return;
+
+            const categories = [
+                { label: 'Calling', nameId: 'top-emp-calling-name', valId: 'top-emp-calling-val', color: '#6366f1' },
+                { label: 'Fresh Audit', nameId: 'top-emp-fresh-name', valId: 'top-emp-fresh-val', color: '#3b82f6' },
+                { label: 'Cross Audit', nameId: 'top-emp-cross-name', valId: 'top-emp-cross-val', color: '#06b6d4' },
+                { label: 'Live Audit', nameId: 'top-emp-live-name', valId: 'top-emp-live-val', color: '#f59e0b' },
+                { label: 'CSR Audit', nameId: 'top-emp-csr-name', valId: 'top-emp-csr-val', color: '#10b981' },
+                { label: 'Alert Marking', nameId: 'top-emp-alert-name', valId: 'top-emp-alert-val', color: '#f43f5e' }
+            ];
+
+            const labels = categories.map(c => {
+                const nameEl = document.getElementById(c.nameId);
+                const name = nameEl ? nameEl.innerText : '-';
+                return `${c.label} (${name})`;
+            });
+            const values = categories.map(c => num(c.valId));
+            const colors = categories.map(c => c.color);
+
+            const data = { labels, datasets: [{ label: 'Top Score', data: values, backgroundColor: colors, borderRadius: 6, maxBarThickness: 30 }] };
+
+            if (charts.employees) { charts.employees.data = data; charts.employees.update(); return; }
+            charts.employees = new Chart(ctx, {
+                type: 'bar',
+                data,
+                options: {
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: chartTextColor }, grid: { color: chartGridColor }, beginAtZero: true },
+                        y: { ticks: { color: chartTextColor, font: { size: 10 } }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function findSheet(dataObj, keywords) {
+            const keys = Object.keys(dataObj);
+            for (let kw of keywords) {
+                let match = keys.find(k => k.toLowerCase().includes(kw.toLowerCase()));
+                if (match) return dataObj[match];
+            }
+            return [];
+        }
+
+        function processDashboardData(data) {
+            console.log('[CPM Dashboard] Sheet tabs available from API:', Object.keys(data));
+            const callingRows = findSheet(data, ['calling']);
+            const liveAuditRows = findSheet(data, ['live']);
+            const projSubRows = findSheet(data, ['submission', 'project']);
+            const empSummaryRows = findSheet(data, ['daily kra']);
+
+            processCalling(callingRows);
+            processLiveAudit(liveAuditRows);
+            processProjectSubmission(projSubRows);
+            processEmployeeSummary(empSummaryRows);
+        }
+
+        // ---- Date range filtering ----
+        let rawRows = { calling: null, liveAudit: null, projSub: null, empSummary: null };
+        let dateFilters = {
+            calling: { from: '', to: '' },
+            liveAudit: { from: '', to: '' },
+            projSub: { from: '', to: '' },
+            empSummary: { from: '', to: '' }
+        };
+
+        function parseFlexibleDate(val) {
+            if (!val) return null;
+            if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+            const s = val.toString().trim();
+            if (!s) return null;
+            let d = new Date(s);
+            if (!isNaN(d.getTime()) && /\d{4}/.test(s)) return d;
+            const parts = s.split(/[\/\-\.]/);
+            if (parts.length === 3) {
+                let a = parseInt(parts[0], 10), b = parseInt(parts[1], 10), c = parseInt(parts[2], 10);
+                if (isNaN(a) || isNaN(b) || isNaN(c)) return null;
+                if (c < 100) c += 2000;
+                // Indian sheets are usually dd/mm/yyyy — try that first, fall back to mm/dd/yyyy
+                let attempt = new Date(c, b - 1, a);
+                if (!isNaN(attempt.getTime()) && a <= 31 && b <= 12) return attempt;
+                attempt = new Date(c, a - 1, b);
+                if (!isNaN(attempt.getTime())) return attempt;
+            }
+            return null;
+        }
+
+        function inDateRange(val, from, to) {
+            if (!from && !to) return true;
+            const d = parseFlexibleDate(val);
+            if (!d) return true; // no parseable date on this row — don't hide it, just can't filter it
+            d.setHours(0, 0, 0, 0);
+            if (from) { const f = new Date(from); f.setHours(0, 0, 0, 0); if (d < f) return false; }
+            if (to) { const t = new Date(to); t.setHours(0, 0, 0, 0); if (d > t) return false; }
+            return true;
+        }
+
+        // For rows that carry a Start Date + End Date range (e.g. an employee's active period),
+        // include the row if that range overlaps at all with the selected filter range.
+        function rangeOverlapsFilter(startVal, endVal, from, to) {
+            if (!from && !to) return true;
+            let s = parseFlexibleDate(startVal);
+            let e = parseFlexibleDate(endVal);
+            if (!s && !e) return true; // can't parse either — don't hide the row
+            if (!s) s = e;
+            if (!e) e = s;
+            s.setHours(0, 0, 0, 0); e.setHours(0, 0, 0, 0);
+            if (to) { const t = new Date(to); t.setHours(0, 0, 0, 0); if (s > t) return false; }
+            if (from) { const f = new Date(from); f.setHours(0, 0, 0, 0); if (e < f) return false; }
+            return true;
+        }
+
+        function applyDateFilter(key) {
+            const fromEl = document.getElementById('date-from-' + key);
+            const toEl = document.getElementById('date-to-' + key);
+            dateFilters[key] = { from: fromEl ? fromEl.value : '', to: toEl ? toEl.value : '' };
+            rerender(key);
+            renderCharts();
+            syncScrollbars();
+        }
+
+        function clearDateFilter(key) {
+            const fromEl = document.getElementById('date-from-' + key);
+            const toEl = document.getElementById('date-to-' + key);
+            if (fromEl) fromEl.value = '';
+            if (toEl) toEl.value = '';
+            applyDateFilter(key);
+        }
+
+        function applyGlobalDateFilter() {
+            const from = document.getElementById('date-from-global').value;
+            const to = document.getElementById('date-to-global').value;
+            ['calling', 'liveAudit', 'projSub', 'empSummary'].forEach(key => {
+                const fEl = document.getElementById('date-from-' + key);
+                const tEl = document.getElementById('date-to-' + key);
+                if (fEl) fEl.value = from;
+                if (tEl) tEl.value = to;
+                dateFilters[key] = { from, to };
+                rerender(key);
+            });
+            renderCharts();
+            syncScrollbars();
+        }
+
+        function clearGlobalDateFilter() {
+            document.getElementById('date-from-global').value = '';
+            document.getElementById('date-to-global').value = '';
+            applyGlobalDateFilter();
+        }
+
+        function rerender(key) {
+            if (key === 'calling') renderCalling();
+            if (key === 'liveAudit') renderLiveAudit();
+            if (key === 'projSub') renderProjSub();
+            if (key === 'empSummary') renderEmpSummary();
+        }
+
+        // 1. CALLING MODULE
+        function processCalling(rows) {
+            rawRows.calling = rows;
+            renderCalling();
+        }
+
+        function renderCalling() {
+            const rows = rawRows.calling;
+            if (!rows || rows.length < 2) return;
+
+            let head = rows[0];
+            let codeIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('project code'));
+            let centersIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('total centers'));
+            let checkIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('total check centers'));
+            let cctvSetupIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('cctv center setup'));
+            let vendorIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('cctv vendor setup'));
+            let dateIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('date'));
+
+            if (codeIdx === -1) { console.warn('[CPM Dashboard] "Project Code" column not found in Calling sheet — falling back to column index 2. Check sheet headers if numbers look wrong.'); codeIdx = 2; }
+            if (centersIdx === -1) { console.warn('[CPM Dashboard] "Total Centers" column not found in Calling sheet — falling back to column index 3.'); centersIdx = 3; }
+            if (checkIdx === -1) { console.warn('[CPM Dashboard] "Total Check Centers" column not found in Calling sheet — falling back to column index 4.'); checkIdx = 4; }
+            if (cctvSetupIdx === -1) { console.warn('[CPM Dashboard] "CCTV Center Setup" column not found in Calling sheet — falling back to column index 5.'); cctvSetupIdx = 5; }
+            if (vendorIdx === -1) { console.warn('[CPM Dashboard] "CCTV Vendor Setup" column not found in Calling sheet — falling back to column index 6.'); vendorIdx = 6; }
+
+            let headHtml = `<tr>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-left">SR NO.</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-left">PROJECT CODE</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTERS</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTER - CS CONNECT</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CCTV CENTER SETUP</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CCTV VENDOR SETUP</th>
+            </tr>`;
+            document.getElementById('head-calling').innerHTML = headHtml;
+
+            let dataRows = [];
+            let sumCenters = 0, sumConf = 0, sumSetup = 0, sumVendor = 0;
+            let uniqueProjects = new Set();
+
+            for (let i = 1; i < rows.length; i++) {
+                let r = rows[i];
+                if (!r || !r[0]) continue;
+
+                let isTotal = r[0].toString().toLowerCase().includes("total");
+                if (isTotal) continue;
+                if (!inDateRange(dateIdx !== -1 ? r[dateIdx] : null, dateFilters.calling.from, dateFilters.calling.to)) continue;
+
+                dataRows.push(r);
+
+                let pCode = r[codeIdx];
+                if (pCode) uniqueProjects.add(pCode.toString().trim());
+
+                sumCenters += Number(r[centersIdx]) || 0;
+                sumConf += Number(r[checkIdx]) || 0;
+                sumSetup += Number(r[cctvSetupIdx]) || 0;
+                sumVendor += Number(r[vendorIdx]) || 0;
+            }
+
+            dataRows.reverse();
+
+            let bodyHtml = "";
+            dataRows.forEach((r, index) => {
+                bodyHtml += `<tr class="hover:bg-slate-800/40">
+                    <td class="p-3 border-b border-slate-800/50 text-left font-semibold">${index + 1}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-left font-semibold">${r[codeIdx] || ''}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right">${r[centersIdx] !== undefined ? r[centersIdx] : 0}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right">${r[checkIdx] !== undefined ? r[checkIdx] : 0}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right">${r[cctvSetupIdx] !== undefined ? r[cctvSetupIdx] : 0}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right">${r[vendorIdx] !== undefined ? r[vendorIdx] : 0}</td>
+                </tr>`;
+            });
+
+            bodyHtml += `<tr class="bg-indigo-950/60 font-bold text-indigo-300">
+                <td class="p-3 border-b border-slate-800 text-left" colspan="2">TOTAL</td>
+                <td class="p-3 border-b border-slate-800 text-right">${sumCenters.toLocaleString()}</td>
+                <td class="p-3 border-b border-slate-800 text-right">${sumConf.toLocaleString()}</td>
+                <td class="p-3 border-b border-slate-800 text-right">${sumSetup.toLocaleString()}</td>
+                <td class="p-3 border-b border-slate-800 text-right">${sumVendor.toLocaleString()}</td>
+            </tr>`;
+
+            document.getElementById('body-calling').innerHTML = bodyHtml;
+
+            document.getElementById('kpi-c-proj').innerText = uniqueProjects.size;
+            document.getElementById('kpi-c1').innerText = sumCenters.toLocaleString();
+            document.getElementById('kpi-c2').innerText = sumConf.toLocaleString();
+            document.getElementById('kpi-c3').innerText = sumVendor.toLocaleString();
+            document.getElementById('kpi-c4').innerText = sumSetup.toLocaleString();
+
+            document.getElementById('sum-calling-centers').innerText = sumCenters.toLocaleString();
+            document.getElementById('sum-calling-conf').innerText = sumConf.toLocaleString();
+            document.getElementById('sum-calling-vendor').innerText = sumVendor.toLocaleString();
+            document.getElementById('sum-calling-setup').innerText = sumSetup.toLocaleString();
+        }
+
+        // 2. LIVE AUDIT MODULE
+        function processLiveAudit(rows) {
+            rawRows.liveAudit = rows;
+            renderLiveAudit();
+        }
+
+        function renderLiveAudit() {
+            const rows = rawRows.liveAudit;
+            if (!rows || rows.length < 2) return;
+
+            let head = rows[0];
+            const targetCols = [
+                'project code', 'total centers', 'discussion', 
+                'sneaking', 'chits', 'electronic gadgets', 'invigilator', 'total number of cases esclated'
+            ];
+
+            let indices = [];
+            targetCols.forEach(tc => {
+                let idx = head.findIndex(h => h && h.toString().toLowerCase().includes(tc));
+                indices.push(idx);
+            });
+            let dateIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('date'));
+
+            let headHtml = "<tr>";
+            targetCols.forEach((tc, i) => {
+                let colTitle = indices[i] !== -1 ? head[indices[i]] : tc.toUpperCase();
+                let alignClass = i === 0 ? 'text-left' : 'text-right';
+                headHtml += `<th class="p-3 border-b border-slate-800 whitespace-nowrap ${alignClass}">${colTitle}</th>`;
+            });
+            headHtml += "</tr>";
+            document.getElementById('head-liveAudit').innerHTML = headHtml;
+
+            let dataRows = [];
+            let uniqueProjects = new Set();
+            let d = 0, s = 0, c = 0, eg = 0, inv = 0, totEsc = 0, totAttempted = 0;
+            let attemptedIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('attempted'));
+
+            for (let i = 1; i < rows.length; i++) {
+                let r = rows[i];
+                if (!r || !r[0]) continue;
+
+                let isTotal = r[0].toString().toLowerCase().includes("total");
+                if (!isTotal) {
+                    if (!inDateRange(dateIdx !== -1 ? r[dateIdx] : null, dateFilters.liveAudit.from, dateFilters.liveAudit.to)) continue;
+                    dataRows.push(r);
+                    let pCode = indices[0] !== -1 ? r[indices[0]] : null;
+                    if (pCode) uniqueProjects.add(pCode.toString().trim());
+
+                    d += Number(r[indices[2]]) || 0;
+                    s += Number(r[indices[3]]) || 0;
+                    c += Number(r[indices[4]]) || 0;
+                    eg += Number(r[indices[5]]) || 0;
+                    inv += Number(r[indices[6]]) || 0;
+                    totEsc += Number(r[indices[7]]) || 0;
+                    if (attemptedIdx !== -1) totAttempted += Number(r[attemptedIdx]) || 0;
+                }
+            }
+
+            dataRows.reverse();
+
+            let bodyHtml = "";
+            dataRows.forEach(r => {
+                bodyHtml += `<tr class="hover:bg-slate-800/40">`;
+                indices.forEach((colIdx, cellIdx) => {
+                    let val = colIdx !== -1 && r[colIdx] !== undefined ? r[colIdx] : '';
+                    let alignClass = cellIdx === 0 ? 'text-left font-semibold' : 'text-right';
+                    bodyHtml += `<td class="p-3 border-b border-slate-800/50 ${alignClass} whitespace-nowrap">${val}</td>`;
+                });
+                bodyHtml += "</tr>";
+            });
+
+            document.getElementById('body-liveAudit').innerHTML = bodyHtml;
+
+            document.getElementById('kpi-la-proj').innerText = uniqueProjects.size;
+            document.getElementById('kpi-la-discussion').innerText = d.toLocaleString();
+            document.getElementById('kpi-la-sneaking').innerText = s.toLocaleString();
+            document.getElementById('kpi-la-chits').innerText = c.toLocaleString();
+            document.getElementById('kpi-la-gadgets').innerText = eg.toLocaleString();
+            document.getElementById('kpi-la-invigilator').innerText = inv.toLocaleString();
+            document.getElementById('kpi-la-total').innerText = totEsc.toLocaleString();
+
+            document.getElementById('sum-live-attempted').innerText = totAttempted.toLocaleString();
+            document.getElementById('sum-live-escalated').innerText = totEsc.toLocaleString();
+        }
+
+        // 3. PROJECT SUBMISSION MODULE
+        function processProjectSubmission(rows) {
+            rawRows.projSub = rows;
+            renderProjSub();
+        }
+
+        function renderProjSub() {
+            const rows = rawRows.projSub;
+            if (!rows || rows.length < 2) return;
+
+            let head = rows[0];
+            const targetCols = [
+                'project code', 'client name', 'unique center',
+                'total idel cam', 'total cam as per audit', 'clint submission', 'audit status'
+            ];
+
+            let indices = [];
+            targetCols.forEach(tc => {
+                let idx = head.findIndex(h => h && h.toString().toLowerCase().includes(tc));
+                indices.push(idx);
+            });
+            let dateIdx = head.findIndex(h => h && h.toString().toLowerCase().includes('date'));
+
+            let headHtml = "<tr>";
+            targetCols.forEach((tc, i) => {
+                let title = indices[i] !== -1 ? head[indices[i]] : tc.toUpperCase();
+                let alignClass = i <= 1 ? 'text-left' : 'text-right';
+                headHtml += `<th class="p-3 border-b border-slate-800 whitespace-nowrap ${alignClass}">${title}</th>`;
+            });
+            headHtml += "</tr>";
+            document.getElementById('head-projSub').innerHTML = headHtml;
+
+            let dataRows = [];
+            let uniqueProjCodes = new Set();
+            let sumUniqCenters = 0, sumIdle = 0, sumAuditCams = 0;
+
+            for (let i = 1; i < rows.length; i++) {
+                let r = rows[i];
+                if (!r || !r[0]) continue;
+
+                let isTotal = r[0].toString().toLowerCase().includes("total");
+                if (!isTotal) {
+                    if (!inDateRange(dateIdx !== -1 ? r[dateIdx] : null, dateFilters.projSub.from, dateFilters.projSub.to)) continue;
+                    dataRows.push(r);
+                    let projCode = indices[0] !== -1 ? r[indices[0]] : null;
+                    if (projCode) uniqueProjCodes.add(projCode.toString().trim());
+
+                    sumUniqCenters += Number(r[indices[2]]) || 0;
+                    sumIdle += Number(r[indices[3]]) || 0;
+                    sumAuditCams += Number(r[indices[4]]) || 0;
+                }
+            }
+
+            dataRows.reverse();
+
+            let bodyHtml = "";
+            dataRows.forEach(r => {
+                bodyHtml += `<tr class="hover:bg-slate-800/40">`;
+                indices.forEach((colIdx, cellIdx) => {
+                    let val = colIdx !== -1 && r[colIdx] !== undefined ? r[colIdx] : '';
+                    let alignClass = cellIdx <= 1 ? 'text-left font-semibold' : 'text-right';
+                    bodyHtml += `<td class="p-3 border-b border-slate-800/50 ${alignClass} whitespace-nowrap">${val}</td>`;
+                });
+                bodyHtml += "</tr>";
+            });
+
+            document.getElementById('body-projSub').innerHTML = bodyHtml;
+
+            let totalUniqueProjects = uniqueProjCodes.size;
+
+            document.getElementById('kpi-ps-uniq-proj').innerText = totalUniqueProjects;
+            document.getElementById('kpi-ps-uniq-centers').innerText = sumUniqCenters.toLocaleString();
+            document.getElementById('kpi-ps-idle').innerText = sumIdle.toLocaleString();
+            document.getElementById('kpi-ps-auditcam').innerText = sumAuditCams.toLocaleString();
+
+            document.getElementById('sum-proj-unique').innerText = totalUniqueProjects;
+            document.getElementById('sum-proj-centers').innerText = sumUniqCenters.toLocaleString();
+            document.getElementById('sum-proj-idle').innerText = sumIdle.toLocaleString();
+            document.getElementById('sum-proj-auditcams').innerText = sumAuditCams.toLocaleString();
+        }
+
+        // 4. EMPLOYEE SUMMARY MODULE
+        function processEmployeeSummary(rows) {
+            rawRows.empSummary = rows;
+            renderEmpSummary();
+        }
+
+        function renderEmpSummary() {
+            const rows = rawRows.empSummary;
+            if (!rows || rows.length < 3) { console.warn('[CPM Dashboard] Daily KRA sheet returned no data rows.'); return; }
+
+            // Row 0 is a merged group-title row (mostly blank); the real column names are on row 1.
+            const head = rows[1];
+            const find = (needle) => head.findIndex(h => h && h.toString().toLowerCase().includes(needle));
+
+            const dateIdx = find('date');
+            const nameIdx = find('employee name');
+            const approvalIdx = find('approval status');
+
+            const callsIdx = find('centers done calling');
+            const freshCenterIdx = find('centers audit');
+            const freshCameraIdx = find('cameras audited');
+            const crossCenterIdx = find('centers checked');
+            const crossCameraIdx = find('cameras checked');
+            const liveIdx = find('cases found');
+            const csrIdx = find('csr audit');
+            const dgPhotoIdx = find('dg delivery photo audit');
+            const dgVendorIdx = find('dg vendor searching');
+            const centerListIdx = find('center for');
+            const cameraListIdx = find('camera for');
+            const alertIdx = find('alert marking');
+
+            const colMap = { dateIdx, nameIdx, approvalIdx, callsIdx, freshCenterIdx, freshCameraIdx, crossCenterIdx, crossCameraIdx, liveIdx, csrIdx, dgPhotoIdx, dgVendorIdx, centerListIdx, cameraListIdx, alertIdx };
+            console.log('[CPM Dashboard] Daily KRA RAW HEADER ROW:', head.map((h, i) => `[${i}] "${h}"`));
+            console.log('[CPM Dashboard] Daily KRA column detection:', colMap);
+
+            document.getElementById('head-empSummary').innerHTML = `<tr>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-left">EMPLOYEE NAMES</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CALLS</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTER - FRESH AUDIT</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CAMERA - FRESH AUDIT</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTER - CROSS AUDIT</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CAMERA - CROSS AUDIT</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL LIVE AUDIT CASE FOUND</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTERS – CSR AUDIT</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTERS – DG DELIVERY PHOTO AUDIT</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL DG VENDOR SEARCHING</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTER FOR - CAMERA LIST</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CAMERA FOR - CAMERA LIST</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL ALERT MARKING</th>
+            </tr>`;
+
+            const perfByEmployee = {};
+            let matchedRows = 0;
+            const sampleRows = [];
+
+            for (let i = 2; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[0]) continue;
+                if (approvalIdx !== -1 && !(r[approvalIdx] || '').toString().trim().toLowerCase().includes('approved')) continue;
+                if (!inDateRange(dateIdx !== -1 ? r[dateIdx] : null, dateFilters.empSummary.from, dateFilters.empSummary.to)) continue;
+                matchedRows++;
+
+                const name = (nameIdx !== -1 && r[nameIdx]) ? r[nameIdx].toString().trim() : 'Unknown';
+                if (!perfByEmployee[name]) {
+                    perfByEmployee[name] = { calls: 0, freshCenter: 0, freshCamera: 0, crossCenter: 0, crossCamera: 0, live: 0, csr: 0, dgPhoto: 0, dgVendor: 0, centerList: 0, cameraList: 0, alert: 0 };
+                }
+                const p = perfByEmployee[name];
+                p.calls += Number(r[callsIdx]) || 0;
+                p.freshCenter += Number(r[freshCenterIdx]) || 0;
+                p.freshCamera += Number(r[freshCameraIdx]) || 0;
+                p.crossCenter += Number(r[crossCenterIdx]) || 0;
+                p.crossCamera += Number(r[crossCameraIdx]) || 0;
+                p.live += Number(r[liveIdx]) || 0;
+                p.csr += Number(r[csrIdx]) || 0;
+                p.dgPhoto += Number(r[dgPhotoIdx]) || 0;
+                p.dgVendor += Number(r[dgVendorIdx]) || 0;
+                p.centerList += Number(r[centerListIdx]) || 0;
+                p.cameraList += Number(r[cameraListIdx]) || 0;
+                p.alert += Number(r[alertIdx]) || 0;
+
+                if (sampleRows.length < 3) {
+                    sampleRows.push({ name, raw: r, extracted: { calls: r[callsIdx], freshCenter: r[freshCenterIdx], freshCamera: r[freshCameraIdx], crossCenter: r[crossCenterIdx], crossCamera: r[crossCameraIdx] } });
+                }
+            }
+
+            console.log('[CPM Dashboard] Daily KRA rows in current date range:', matchedRows, 'of', rows.length - 2);
+            console.log('[CPM Dashboard] Sample matched rows (first 3) with extracted values:', sampleRows);
+
+            const employees = Object.entries(perfByEmployee).sort((a, b) => b[1].calls - a[1].calls);
+            let bodyHtml = "";
+            const totals = { calls: 0, freshCenter: 0, freshCamera: 0, crossCenter: 0, crossCamera: 0, live: 0, csr: 0, dgPhoto: 0, dgVendor: 0, centerList: 0, cameraList: 0, alert: 0 };
+            const cell = (v) => `<td class="p-3 border-b border-slate-800/50 text-right">${v.toLocaleString()}</td>`;
+
+            employees.forEach(([name, p]) => {
+                Object.keys(totals).forEach(k => totals[k] += p[k]);
+                bodyHtml += `<tr class="hover:bg-slate-800/40">
+                    <td class="p-3 border-b border-slate-800/50 text-left font-semibold whitespace-nowrap">${name}</td>
+                    ${cell(p.calls)}${cell(p.freshCenter)}${cell(p.freshCamera)}${cell(p.crossCenter)}${cell(p.crossCamera)}${cell(p.live)}${cell(p.csr)}${cell(p.dgPhoto)}${cell(p.dgVendor)}${cell(p.centerList)}${cell(p.cameraList)}${cell(p.alert)}
+                </tr>`;
+            });
+            if (employees.length > 0) {
+                bodyHtml += `<tr class="bg-indigo-950/60 font-bold text-indigo-300">
+                    <td class="p-3 border-b border-slate-800 text-left">TOTAL</td>
+                    ${cell(totals.calls)}${cell(totals.freshCenter)}${cell(totals.freshCamera)}${cell(totals.crossCenter)}${cell(totals.crossCamera)}${cell(totals.live)}${cell(totals.csr)}${cell(totals.dgPhoto)}${cell(totals.dgVendor)}${cell(totals.centerList)}${cell(totals.cameraList)}${cell(totals.alert)}
+                </tr>`;
+            }
+
+            document.getElementById('body-empSummary').innerHTML = bodyHtml ||
+                `<tr><td class="p-4 text-center text-slate-500" colspan="13">No entries in this date range.</td></tr>`;
+
+            const topOf = (key) => {
+                let best = { name: '-', val: -1 };
+                Object.entries(perfByEmployee).forEach(([name, p]) => { if (p[key] > best.val) best = { name, val: p[key] }; });
+                return best;
+            };
+            const topEmp = {
+                calling: topOf('calls'),
+                fresh: topOf('freshCenter'),
+                cross: topOf('crossCenter'),
+                live: topOf('live'), csr: topOf('csr'), alert: topOf('alert')
+            };
+
+            document.getElementById('top-emp-calling-name').innerText = topEmp.calling.name;
+            document.getElementById('top-emp-calling-val').innerText = Math.max(topEmp.calling.val, 0).toLocaleString();
+
+            document.getElementById('top-emp-fresh-name').innerText = topEmp.fresh.name;
+            document.getElementById('top-emp-fresh-val').innerText = Math.max(topEmp.fresh.val, 0).toLocaleString();
+
+            document.getElementById('top-emp-cross-name').innerText = topEmp.cross.name;
+            document.getElementById('top-emp-cross-val').innerText = Math.max(topEmp.cross.val, 0).toLocaleString();
+
+            document.getElementById('top-emp-live-name').innerText = topEmp.live.name;
+            document.getElementById('top-emp-live-val').innerText = Math.max(topEmp.live.val, 0).toLocaleString();
+
+            document.getElementById('top-emp-csr-name').innerText = topEmp.csr.name;
+            document.getElementById('top-emp-csr-val').innerText = Math.max(topEmp.csr.val, 0).toLocaleString();
+
+            document.getElementById('top-emp-alert-name').innerText = topEmp.alert.name;
+            document.getElementById('top-emp-alert-val').innerText = Math.max(topEmp.alert.val, 0).toLocaleString();
+        }
+
+        window.onload = function() {
+            fetchLiveData();
+            setInterval(fetchLiveData, 300000); // 5 mins sync
+            window.addEventListener('resize', syncScrollbars);
+        };
+    </script>
+</body>
+</html>
