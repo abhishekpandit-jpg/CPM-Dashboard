@@ -184,6 +184,10 @@
                     <span class="flex items-center"><i class="fa-solid fa-users text-indigo-400 mr-3 text-sm"></i> Employee Summary</span>
                     <i class="fa-solid fa-chevron-right text-[10px]"></i>
                 </button>
+                <button onclick="switchTab('tabRanking')" id="btn-tabRanking" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800/60 flex items-center justify-between transition-all">
+                    <span class="flex items-center"><i class="fa-solid fa-trophy text-indigo-400 mr-3 text-sm"></i> Performance Ranking</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
             </nav>
         </aside>
 
@@ -613,6 +617,39 @@
                 </div>
             </section>
 
+            <!-- 6. PERFORMANCE RANKING TAB -->
+            <section id="tabRanking" class="tab-content hidden space-y-6">
+                <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-500">
+                    <p class="text-xs text-slate-400">Each vertical (Calling, Fresh Audit, Cross Audit, Live Audit, CSR Audit) is ranked independently — every employee's rank is based only on their own performance within that vertical.</p>
+                </div>
+
+                <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-end gap-3">
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">From</label>
+                        <input type="date" id="date-from-ranking" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">To</label>
+                        <input type="date" id="date-to-ranking" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <button onclick="applyDateFilter('ranking')" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply</button>
+                    <button onclick="clearDateFilter('ranking')" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear</button>
+                    <span class="text-[10px] text-slate-500">Sourced from Daily KRA (Approved entries only), date column C.</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
+                    <div class="relative flex-1 max-w-xs">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="search-ranking" oninput="filterTable('ranking')" placeholder="Search employee name..." class="table-search w-full text-xs rounded-xl pl-8 pr-3 py-2 text-white placeholder-slate-500">
+                    </div>
+                    <button onclick="exportTableCSV('ranking', 'CPM_Performance_Ranking')" class="export-btn glass-panel text-[11px] font-semibold text-slate-300 px-3 py-2 rounded-xl flex items-center gap-2 self-start sm:self-auto">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i> Export CSV
+                    </button>
+                </div>
+
+                <div id="ranking-tables-wrapper" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+            </section>
+
         </main>
     </div>
 
@@ -737,6 +774,15 @@
         function filterTable(key) {
             const input = document.getElementById('search-' + key);
             const term = input.value.trim().toLowerCase();
+
+            if (key === 'ranking') {
+                document.querySelectorAll('#ranking-tables-wrapper .ranking-row').forEach(row => {
+                    const name = row.getAttribute('data-name') || '';
+                    row.style.display = name.includes(term) ? '' : 'none';
+                });
+                return;
+            }
+
             const tbody = document.getElementById('body-' + key);
             if (!tbody) return;
             Array.from(tbody.rows).forEach(row => {
@@ -747,21 +793,36 @@
 
         // ---- CSV export (respects current search filter) ----
         function exportTableCSV(key, filename) {
-            const head = document.getElementById('head-' + key);
-            const body = document.getElementById('body-' + key);
-            if (!head || !body) return;
-
             const escapeCSV = (val) => `"${String(val).replace(/"/g, '""')}"`;
             const rows = [];
 
-            const headerCells = Array.from(head.querySelectorAll('th')).map(th => escapeCSV(th.innerText));
-            rows.push(headerCells.join(','));
+            if (key === 'ranking') {
+                document.querySelectorAll('#ranking-tables-wrapper table').forEach(table => {
+                    const sectionTitle = table.closest('.glass-panel').querySelector('h4').innerText;
+                    rows.push(escapeCSV(sectionTitle));
+                    const headerCells = Array.from(table.querySelectorAll('thead th')).map(th => escapeCSV(th.innerText));
+                    rows.push(headerCells.join(','));
+                    Array.from(table.querySelectorAll('tbody tr')).forEach(row => {
+                        if (row.style.display === 'none') return;
+                        const cells = Array.from(row.cells).map(td => escapeCSV(td.innerText));
+                        rows.push(cells.join(','));
+                    });
+                    rows.push('');
+                });
+            } else {
+                const head = document.getElementById('head-' + key);
+                const body = document.getElementById('body-' + key);
+                if (!head || !body) return;
 
-            Array.from(body.rows).forEach(row => {
-                if (row.style.display === 'none') return; // skip filtered-out rows
-                const cells = Array.from(row.cells).map(td => escapeCSV(td.innerText));
-                rows.push(cells.join(','));
-            });
+                const headerCells = Array.from(head.querySelectorAll('th')).map(th => escapeCSV(th.innerText));
+                rows.push(headerCells.join(','));
+
+                Array.from(body.rows).forEach(row => {
+                    if (row.style.display === 'none') return; // skip filtered-out rows
+                    const cells = Array.from(row.cells).map(td => escapeCSV(td.innerText));
+                    rows.push(cells.join(','));
+                });
+            }
 
             const csvContent = rows.join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -952,7 +1013,8 @@
             liveAudit: { from: '', to: '' },
             projSub: { from: '', to: '' },
             empSummary: { from: '', to: '' },
-            escalation: { from: '', to: '' }
+            escalation: { from: '', to: '' },
+            ranking: { from: '', to: '' }
         };
 
         function parseFlexibleDate(val) {
@@ -1021,7 +1083,7 @@
         function applyGlobalDateFilter() {
             const from = document.getElementById('date-from-global').value;
             const to = document.getElementById('date-to-global').value;
-            ['calling', 'liveAudit', 'projSub', 'empSummary', 'escalation'].forEach(key => {
+            ['calling', 'liveAudit', 'projSub', 'empSummary', 'escalation', 'ranking'].forEach(key => {
                 const fEl = document.getElementById('date-from-' + key);
                 const tEl = document.getElementById('date-to-' + key);
                 if (fEl) fEl.value = from;
@@ -1045,6 +1107,7 @@
             if (key === 'projSub') renderProjSub();
             if (key === 'empSummary') renderEmpSummary();
             if (key === 'escalation') renderEscalation();
+            if (key === 'ranking') renderRanking();
         }
 
         // 1. CALLING MODULE
@@ -1341,6 +1404,7 @@
         function processEmployeeSummary(rows) {
             rawRows.empSummary = rows;
             renderEmpSummary();
+            renderRanking();
         }
 
         function renderEmpSummary() {
@@ -1395,14 +1459,16 @@
             for (let i = 2; i < rows.length; i++) {
                 const r = rows[i];
                 if (!r || !r[0]) continue;
-                if (approvalIdx !== -1 && !(r[approvalIdx] || '').toString().trim().toLowerCase().includes('approved')) continue;
-                if (!inDateRange(dateIdx !== -1 ? r[dateIdx] : null, dateFilters.empSummary.from, dateFilters.empSummary.to)) continue;
-                matchedRows++;
 
                 const name = (nameIdx !== -1 && r[nameIdx]) ? r[nameIdx].toString().trim() : 'Unknown';
                 if (!perfByEmployee[name]) {
                     perfByEmployee[name] = { calls: 0, freshCenter: 0, freshCamera: 0, crossCenter: 0, crossCamera: 0, live: 0, csr: 0, dgPhoto: 0, dgVendor: 0, centerList: 0, cameraList: 0, alert: 0 };
                 }
+
+                if (approvalIdx !== -1 && !(r[approvalIdx] || '').toString().trim().toLowerCase().includes('approved')) continue;
+                if (!inDateRange(dateIdx !== -1 ? r[dateIdx] : null, dateFilters.empSummary.from, dateFilters.empSummary.to)) continue;
+                matchedRows++;
+
                 const p = perfByEmployee[name];
                 p.calls += Number(r[callsIdx]) || 0;
                 p.freshCenter += Number(r[freshCenterIdx]) || 0;
@@ -1476,6 +1542,127 @@
 
             document.getElementById('top-emp-alert-name').innerText = topEmp.alert.name;
             document.getElementById('top-emp-alert-val').innerText = Math.max(topEmp.alert.val, 0).toLocaleString();
+        }
+
+        // 6. PERFORMANCE RANKING MODULE (reuses Daily KRA data already loaded for Employee Summary)
+        function computeRanks(list, key) {
+            // Descending rank: highest value = rank 1. Ties share the same rank (standard competition ranking).
+            const sorted = [...list].sort((a, b) => b[key] - a[key]);
+            const ranks = {};
+            let rank = 0, prevVal = null, position = 0;
+            sorted.forEach(e => {
+                position++;
+                if (e[key] !== prevVal) { rank = position; prevVal = e[key]; }
+                ranks[e.name] = rank;
+            });
+            return ranks;
+        }
+
+        function pointsForRank(rank) {
+            return 15 - (rank - 1) * 0.5;
+        }
+
+        function renderRanking() {
+            const rows = rawRows.empSummary;
+            if (!rows || rows.length < 3) return;
+
+            const head = rows[1];
+            const find = (needle) => head.findIndex(h => h && h.toString().toLowerCase().includes(needle));
+
+            const dateIdx = 2; // Spreadsheet column C — confirmed date column
+            const nameIdx = find('employee name');
+            const codeIdx = find('employee code');
+            const approvalIdx = find('approval status');
+            const callsIdx = find('centers done calling');
+            const freshCenterIdx = find('centers audit');
+            const freshCameraIdx = find('cameras audited');
+            const crossCenterIdx = find('centers checked');
+            const crossCameraIdx = find('cameras checked');
+            const liveIdx = find('cases found');
+            const csrIdx = find('csr audit');
+
+            const perf = {};
+            for (let i = 2; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[0]) continue;
+
+                const name = (nameIdx !== -1 && r[nameIdx]) ? r[nameIdx].toString().trim() : 'Unknown';
+                if (!perf[name]) {
+                    perf[name] = { code: codeIdx !== -1 ? (r[codeIdx] || '') : '', calls: 0, freshCenter: 0, freshCamera: 0, crossCenter: 0, crossCamera: 0, live: 0, csr: 0 };
+                }
+
+                if (approvalIdx !== -1 && !(r[approvalIdx] || '').toString().trim().toLowerCase().includes('approved')) continue;
+                if (!inDateRange(r[dateIdx], dateFilters.ranking.from, dateFilters.ranking.to)) continue;
+
+                const p = perf[name];
+                p.calls += Number(r[callsIdx]) || 0;
+                p.freshCenter += Number(r[freshCenterIdx]) || 0;
+                p.freshCamera += Number(r[freshCameraIdx]) || 0;
+                p.crossCenter += Number(r[crossCenterIdx]) || 0;
+                p.crossCamera += Number(r[crossCameraIdx]) || 0;
+                p.live += Number(r[liveIdx]) || 0;
+                p.csr += Number(r[csrIdx]) || 0;
+            }
+
+            const employees = Object.entries(perf).map(([name, p]) => ({
+                name, code: p.code,
+                calls: p.calls,
+                freshCenter: p.freshCenter,
+                freshCamera: p.freshCamera,
+                crossCenter: p.crossCenter,
+                crossCamera: p.crossCamera,
+                live: p.live,
+                csr: p.csr
+            }));
+
+            const verticals = [
+                { key: 'calling', title: 'Calling', columns: [{ label: 'TOTAL CALLS', key: 'calls' }], rankKey: 'calls', accent: 'border-l-indigo-500' },
+                { key: 'fresh', title: 'Fresh Audit', columns: [{ label: 'TOTAL CENTER - FRESH AUDIT', key: 'freshCenter' }, { label: 'TOTAL CAMERA - FRESH AUDIT', key: 'freshCamera' }], rankKey: 'freshCenter', accent: 'border-l-blue-500' },
+                { key: 'cross', title: 'Cross Audit', columns: [{ label: 'TOTAL CENTER - CROSS AUDIT', key: 'crossCenter' }, { label: 'TOTAL CAMERA - CROSS AUDIT', key: 'crossCamera' }], rankKey: 'crossCenter', accent: 'border-l-cyan-500' },
+                { key: 'live', title: 'Live Audit', columns: [{ label: 'TOTAL LIVE AUDIT', key: 'live' }], rankKey: 'live', accent: 'border-l-amber-500' },
+                { key: 'csr', title: 'CSR Audit', columns: [{ label: 'TOTAL CSR AUDIT', key: 'csr' }], rankKey: 'csr', accent: 'border-l-emerald-500' }
+            ];
+
+            let wrapperHtml = "";
+            verticals.forEach(v => {
+                const ranks = computeRanks(employees, v.rankKey);
+                const sorted = [...employees].sort((a, b) => b[v.rankKey] - a[v.rankKey]);
+
+                let rowsHtml = "";
+                sorted.forEach((e, idx) => {
+                    const valueCells = v.columns.map(c => `<td class="p-2.5 border-b border-slate-800/50 text-right">${e[c.key].toLocaleString()}</td>`).join('');
+                    rowsHtml += `<tr class="hover:bg-slate-800/40 ranking-row" data-name="${e.name.toLowerCase()}">
+                        <td class="p-2.5 border-b border-slate-800/50 text-left">${idx + 1}</td>
+                        <td class="p-2.5 border-b border-slate-800/50 text-left font-semibold whitespace-nowrap">${e.name}</td>
+                        ${valueCells}
+                        <td class="p-2.5 border-b border-slate-800/50 text-right font-bold text-indigo-300">#${ranks[e.name]}</td>
+                    </tr>`;
+                });
+                if (!rowsHtml) rowsHtml = `<tr><td class="p-4 text-center text-slate-500" colspan="${2 + v.columns.length + 1}">No entries in this date range.</td></tr>`;
+
+                const headerCols = v.columns.map(c => `<th class="p-2.5 border-b border-slate-800 whitespace-nowrap text-right">${c.label}</th>`).join('');
+
+                wrapperHtml += `<div class="glass-panel rounded-2xl overflow-hidden border border-slate-800 border-l-4 ${v.accent}">
+                    <div class="px-4 py-3 border-b border-slate-800">
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">${v.title}</h4>
+                    </div>
+                    <div class="custom-scroll max-h-[420px] overflow-y-auto">
+                        <table class="w-full text-left border-collapse text-xs" id="table-ranking-${v.key}">
+                            <thead class="bg-slate-900 text-slate-300 font-bold uppercase sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-2.5 border-b border-slate-800 whitespace-nowrap text-left">SL</th>
+                                    <th class="p-2.5 border-b border-slate-800 whitespace-nowrap text-left">EMPLOYEE NAME</th>
+                                    ${headerCols}
+                                    <th class="p-2.5 border-b border-slate-800 whitespace-nowrap text-right">RANK</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800/60">${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+            });
+
+            document.getElementById('ranking-tables-wrapper').innerHTML = wrapperHtml;
         }
 
         window.onload = function() {
