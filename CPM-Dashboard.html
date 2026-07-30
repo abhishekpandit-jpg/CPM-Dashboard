@@ -188,6 +188,10 @@
                     <span class="flex items-center"><i class="fa-solid fa-trophy text-indigo-400 mr-3 text-sm"></i> Performance Ranking</span>
                     <i class="fa-solid fa-chevron-right text-[10px]"></i>
                 </button>
+                <button onclick="switchTab('tabOverallRank')" id="btn-tabOverallRank" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800/60 flex items-center justify-between transition-all">
+                    <span class="flex items-center"><i class="fa-solid fa-crown text-indigo-400 mr-3 text-sm"></i> Overall Rank</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
             </nav>
         </aside>
 
@@ -650,6 +654,48 @@
                 <div id="ranking-tables-wrapper" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
             </section>
 
+            <!-- 7. OVERALL RANK TAB -->
+            <section id="tabOverallRank" class="tab-content hidden space-y-6">
+                <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-500">
+                    <p class="text-xs text-slate-400">Combines 4 verticals — Calling, Fresh Audit (by Center count), Cross Audit (by Center count), Live Audit. Each vertical's rank earns a score (Rank 1 = 2.5, Rank 2 = 2.4 ... down by 0.1 per rank, ties share the same rank and score). The 4 scores are summed into a Total Score, and employees are sorted into the Overall Rank by that total.</p>
+                </div>
+
+                <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-end gap-3">
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">From</label>
+                        <input type="date" id="date-from-overallRank" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">To</label>
+                        <input type="date" id="date-to-overallRank" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                    </div>
+                    <button onclick="applyDateFilter('overallRank')" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply</button>
+                    <button onclick="clearDateFilter('overallRank')" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear</button>
+                    <span class="text-[10px] text-slate-500">Sourced from Daily KRA (Approved entries only), date column C.</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
+                    <div class="relative flex-1 max-w-xs">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="search-overallRank" oninput="filterTable('overallRank')" placeholder="Search employee name..." class="table-search w-full text-xs rounded-xl pl-8 pr-3 py-2 text-white placeholder-slate-500">
+                    </div>
+                    <button onclick="exportTableCSV('overallRank', 'CPM_Overall_Rank')" class="export-btn glass-panel text-[11px] font-semibold text-slate-300 px-3 py-2 rounded-xl flex items-center gap-2 self-start sm:self-auto">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i> Export CSV
+                    </button>
+                </div>
+                <div class="glass-panel rounded-2xl overflow-hidden border border-slate-800 p-2">
+                    <div class="top-scroll-wrapper id-scroll-overallRank-top">
+                        <div class="dummy-space h-1"></div>
+                    </div>
+                    <div class="custom-scroll max-h-[600px] id-scroll-overallRank-body">
+                        <table class="w-full text-left border-collapse text-xs min-w-[1000px]">
+                            <thead class="bg-slate-900 text-slate-300 font-bold uppercase sticky top-0 z-10" id="head-overallRank"></thead>
+                            <tbody id="body-overallRank" class="divide-y divide-slate-800/60"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -712,6 +758,7 @@
             setupScrollSync('id-scroll-liveAudit-top', 'id-scroll-liveAudit-body');
             setupScrollSync('id-scroll-projSub-top', 'id-scroll-projSub-body');
             setupScrollSync('id-scroll-empSummary-top', 'id-scroll-empSummary-body');
+            setupScrollSync('id-scroll-overallRank-top', 'id-scroll-overallRank-body');
         }
 
         let retryTimer = null;
@@ -1014,7 +1061,8 @@
             projSub: { from: '', to: '' },
             empSummary: { from: '', to: '' },
             escalation: { from: '', to: '' },
-            ranking: { from: '', to: '' }
+            ranking: { from: '', to: '' },
+            overallRank: { from: '', to: '' }
         };
 
         function parseFlexibleDate(val) {
@@ -1083,7 +1131,7 @@
         function applyGlobalDateFilter() {
             const from = document.getElementById('date-from-global').value;
             const to = document.getElementById('date-to-global').value;
-            ['calling', 'liveAudit', 'projSub', 'empSummary', 'escalation', 'ranking'].forEach(key => {
+            ['calling', 'liveAudit', 'projSub', 'empSummary', 'escalation', 'ranking', 'overallRank'].forEach(key => {
                 const fEl = document.getElementById('date-from-' + key);
                 const tEl = document.getElementById('date-to-' + key);
                 if (fEl) fEl.value = from;
@@ -1108,6 +1156,7 @@
             if (key === 'empSummary') renderEmpSummary();
             if (key === 'escalation') renderEscalation();
             if (key === 'ranking') renderRanking();
+            if (key === 'overallRank') renderOverallRank();
         }
 
         // 1. CALLING MODULE
@@ -1405,6 +1454,7 @@
             rawRows.empSummary = rows;
             renderEmpSummary();
             renderRanking();
+            renderOverallRank();
         }
 
         function renderEmpSummary() {
@@ -1663,6 +1713,101 @@
             });
 
             document.getElementById('ranking-tables-wrapper').innerHTML = wrapperHtml;
+        }
+
+        // 7. OVERALL RANK MODULE (reuses Daily KRA data already loaded for Employee Summary)
+        function pointsForRank2(rank) {
+            return 2.5 - (rank - 1) * 0.1;
+        }
+
+        function renderOverallRank() {
+            const rows = rawRows.empSummary;
+            if (!rows || rows.length < 3) return;
+
+            const head = rows[1];
+            const find = (needle) => head.findIndex(h => h && h.toString().toLowerCase().includes(needle));
+
+            const dateIdx = 2; // Spreadsheet column C — confirmed date column
+            const nameIdx = find('employee name');
+            const codeIdx = find('employee code');
+            const approvalIdx = find('approval status');
+            const callsIdx = find('centers done calling');
+            const freshCenterIdx = find('centers audit');
+            const crossCenterIdx = find('centers checked');
+            const liveIdx = find('cases found');
+
+            const perf = {};
+            for (let i = 2; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[0]) continue;
+
+                const name = (nameIdx !== -1 && r[nameIdx]) ? r[nameIdx].toString().trim() : 'Unknown';
+                if (!perf[name]) {
+                    perf[name] = { code: codeIdx !== -1 ? (r[codeIdx] || '') : '', calls: 0, freshCenter: 0, crossCenter: 0, live: 0 };
+                }
+
+                if (approvalIdx !== -1 && !(r[approvalIdx] || '').toString().trim().toLowerCase().includes('approved')) continue;
+                if (!inDateRange(r[dateIdx], dateFilters.overallRank.from, dateFilters.overallRank.to)) continue;
+
+                const p = perf[name];
+                p.calls += Number(r[callsIdx]) || 0;
+                p.freshCenter += Number(r[freshCenterIdx]) || 0;
+                p.crossCenter += Number(r[crossCenterIdx]) || 0;
+                p.live += Number(r[liveIdx]) || 0;
+            }
+
+            const employees = Object.entries(perf).map(([name, p]) => ({ name, code: p.code, calls: p.calls, freshCenter: p.freshCenter, crossCenter: p.crossCenter, live: p.live }));
+
+            const callRanks = computeRanks(employees, 'calls');
+            const freshRanks = computeRanks(employees, 'freshCenter');
+            const crossRanks = computeRanks(employees, 'crossCenter');
+            const liveRanks = computeRanks(employees, 'live');
+
+            employees.forEach(e => {
+                e.callRank = callRanks[e.name];
+                e.freshRank = freshRanks[e.name];
+                e.crossRank = crossRanks[e.name];
+                e.liveRank = liveRanks[e.name];
+                e.callScore = pointsForRank2(e.callRank);
+                e.freshScore = pointsForRank2(e.freshRank);
+                e.crossScore = pointsForRank2(e.crossRank);
+                e.liveScore = pointsForRank2(e.liveRank);
+                e.totalScore = e.callScore + e.freshScore + e.crossScore + e.liveScore;
+            });
+
+            const overallRanks = computeRanks(employees, 'totalScore');
+            employees.forEach(e => e.overallRank = overallRanks[e.name]);
+            employees.sort((a, b) => a.overallRank - b.overallRank);
+
+            document.getElementById('head-overallRank').innerHTML = `<tr>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-left">SL</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-left">EMPLOYEE NAME</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-left">EMPLOYEE CODE</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">CALLING SCORE</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">FRESH AUDIT SCORE</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">CROSS AUDIT SCORE</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">LIVE AUDIT SCORE</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL SCORE</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">OVERALL RANK</th>
+            </tr>`;
+
+            let bodyHtml = "";
+            employees.forEach((e, idx) => {
+                bodyHtml += `<tr class="hover:bg-slate-800/40">
+                    <td class="p-3 border-b border-slate-800/50 text-left">${idx + 1}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-left font-semibold whitespace-nowrap">${e.name}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-left">${e.code}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right">${e.callScore.toFixed(1)}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right">${e.freshScore.toFixed(1)}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right">${e.crossScore.toFixed(1)}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right">${e.liveScore.toFixed(1)}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right font-bold text-white">${e.totalScore.toFixed(1)}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right font-extrabold text-indigo-300">#${e.overallRank}</td>
+                </tr>`;
+            });
+
+            document.getElementById('body-overallRank').innerHTML = bodyHtml ||
+                `<tr><td class="p-4 text-center text-slate-500" colspan="9">No entries in this date range.</td></tr>`;
         }
 
         window.onload = function() {
