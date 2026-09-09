@@ -24,6 +24,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -121,6 +124,10 @@
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span id="sync-text">Live Sync Active</span>
                 </div>
+                <button onclick="downloadActiveTabPDF()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 border border-slate-700 text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-file-pdf text-rose-400 text-xs"></i>
+                    <span>Download PDF</span>
+                </button>
                 <button onclick="fetchLiveData()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex items-center gap-2">
                     <i class="fa-solid fa-arrows-rotate text-xs" id="refresh-icon"></i>
                     <span>Sync Sheet</span>
@@ -188,6 +195,10 @@
                     <span class="flex items-center"><i class="fa-solid fa-trophy text-indigo-400 mr-3 text-sm"></i> Performance Ranking</span>
                     <i class="fa-solid fa-chevron-right text-[10px]"></i>
                 </button>
+                <button onclick="switchTab('tabQualityScore')" id="btn-tabQualityScore" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800/60 flex items-center justify-between transition-all">
+                    <span class="flex items-center"><i class="fa-solid fa-star text-indigo-400 mr-3 text-sm"></i> Quality Score</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
                 <button onclick="switchTab('tabOverallRank')" id="btn-tabOverallRank" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800/60 flex items-center justify-between transition-all">
                     <span class="flex items-center"><i class="fa-solid fa-crown text-indigo-400 mr-3 text-sm"></i> Overall Rank</span>
                     <i class="fa-solid fa-chevron-right text-[10px]"></i>
@@ -213,6 +224,18 @@
                     <button onclick="applyGlobalDateFilter()" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply to All Modules</button>
                     <button onclick="clearGlobalDateFilter()" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear All</button>
                     <span class="text-[10px] text-slate-500">Applies the same range across every tab's date column, where one exists.</span>
+                </div>
+
+                <!-- Top performer per vertical -->
+                <div>
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-medal"></i> Top Performers — By Vertical
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="top3-wrapper">
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-400"><p class="text-[11px] text-slate-400 font-medium">Top Calling</p><h4 class="text-lg font-extrabold text-white mt-1">-</h4></div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-blue-400"><p class="text-[11px] text-slate-400 font-medium">Top Fresh Audit</p><h4 class="text-lg font-extrabold text-white mt-1">-</h4></div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-amber-400"><p class="text-[11px] text-slate-400 font-medium">Top Live Audit</p><h4 class="text-lg font-extrabold text-white mt-1">-</h4></div>
+                    </div>
                 </div>
 
                 <!-- Calling Section -->
@@ -282,6 +305,10 @@
                         <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-teal-500">
                             <p class="text-[11px] text-slate-400 font-medium">Total Centers (Unique Centers)</p>
                             <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-centers">0</h4>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-sky-500">
+                            <p class="text-[11px] text-slate-400 font-medium">Total Actual Centers</p>
+                            <h4 class="text-2xl font-extrabold text-white mt-1" id="sum-proj-actual">0</h4>
                         </div>
                         <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-rose-500">
                             <p class="text-[11px] text-slate-400 font-medium">Total Idle Cams</p>
@@ -494,6 +521,10 @@
                         <p class="text-[11px] text-slate-400 font-medium">Total Centers (Unique Centers)</p>
                         <h4 class="text-xl font-bold text-white mt-1" id="kpi-ps-uniq-centers">0</h4>
                     </div>
+                    <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-sky-500">
+                        <p class="text-[11px] text-slate-400 font-medium">Total Actual Centers</p>
+                        <h4 class="text-xl font-bold text-white mt-1" id="kpi-ps-actual">0</h4>
+                    </div>
                     <div class="glass-panel p-4 rounded-2xl border-t-2 border-t-rose-500">
                         <p class="text-[11px] text-slate-400 font-medium">Total Idle Cam</p>
                         <h4 class="text-xl font-bold text-white mt-1" id="kpi-ps-idle">0</h4>
@@ -551,7 +582,7 @@
 
             <!-- 5. EMPLOYEE SUMMARY TAB -->
             <section id="tabEmpSummary" class="tab-content hidden space-y-6">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-l-indigo-500">
                         <p class="text-[10px] text-slate-400 font-bold uppercase">Top Calling</p>
                         <h5 class="text-xs font-bold text-indigo-300 mt-1 truncate" id="top-emp-calling-name">-</h5>
@@ -562,11 +593,6 @@
                         <h5 class="text-xs font-bold text-blue-300 mt-1 truncate" id="top-emp-fresh-name">-</h5>
                         <p class="text-lg font-extrabold text-white" id="top-emp-fresh-val">0</p>
                     </div>
-                    <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-l-cyan-500">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Top Cross Audit</p>
-                        <h5 class="text-xs font-bold text-cyan-300 mt-1 truncate" id="top-emp-cross-name">-</h5>
-                        <p class="text-lg font-extrabold text-white" id="top-emp-cross-val">0</p>
-                    </div>
                     <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-l-amber-500">
                         <p class="text-[10px] text-slate-400 font-bold uppercase">Top Live Audit</p>
                         <h5 class="text-xs font-bold text-amber-300 mt-1 truncate" id="top-emp-live-name">-</h5>
@@ -576,11 +602,6 @@
                         <p class="text-[10px] text-slate-400 font-bold uppercase">Top CSR Audit</p>
                         <h5 class="text-xs font-bold text-emerald-300 mt-1 truncate" id="top-emp-csr-name">-</h5>
                         <p class="text-lg font-extrabold text-white" id="top-emp-csr-val">0</p>
-                    </div>
-                    <div class="glass-panel p-3.5 rounded-2xl border-l-4 border-l-rose-500">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Top Alert Marking</p>
-                        <h5 class="text-xs font-bold text-rose-300 mt-1 truncate" id="top-emp-alert-name">-</h5>
-                        <p class="text-lg font-extrabold text-white" id="top-emp-alert-val">0</p>
                     </div>
                 </div>
 
@@ -613,7 +634,7 @@
                         <div class="dummy-space h-1"></div>
                     </div>
                     <div class="custom-scroll max-h-[600px] id-scroll-empSummary-body">
-                        <table class="w-full text-left border-collapse text-xs min-w-[2000px]">
+                        <table class="w-full text-left border-collapse text-xs min-w-[780px]">
                             <thead class="bg-slate-900 text-slate-300 font-bold uppercase sticky top-0 z-10" id="head-empSummary"></thead>
                             <tbody id="body-empSummary" class="divide-y divide-slate-800/60"></tbody>
                         </table>
@@ -624,7 +645,7 @@
             <!-- 6. PERFORMANCE RANKING TAB -->
             <section id="tabRanking" class="tab-content hidden space-y-6">
                 <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-500">
-                    <p class="text-xs text-slate-400">Each vertical (Calling, Fresh Audit, Cross Audit, Live Audit, CSR Audit) is ranked independently — every employee's rank is based only on their own performance within that vertical.</p>
+                    <p class="text-xs text-slate-400">Each vertical (Calling, Fresh Audit, Live Audit, CSR Audit) is ranked independently — every employee's rank is based only on their own performance within that vertical.</p>
                 </div>
 
                 <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-end gap-3">
@@ -654,10 +675,57 @@
                 <div id="ranking-tables-wrapper" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
             </section>
 
-            <!-- 7. OVERALL RANK TAB -->
+            <!-- 7. QUALITY SCORE TAB -->
+            <section id="tabQualityScore" class="tab-content hidden space-y-6">
+                <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-500">
+                    <p class="text-xs text-slate-400">Cross-audit quality from the <span class="text-slate-200 font-semibold">CCTV Data Audit Quality Score</span> sheet — the average of each executive's <span class="text-slate-200">Total Scoring</span> (column V) for audits whose date (column D) falls in the selected range. 100 = fully clean audit, 0 = one or more parameters marked Wrong.</p>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-purple-500"><p class="text-[10px] text-slate-400 font-bold uppercase">Total Audits</p><h4 class="text-lg font-bold text-purple-400 mt-0.5" id="kpi-qs-audits">0</h4></div>
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-emerald-500"><p class="text-[10px] text-slate-400 font-bold uppercase">Avg Quality Score</p><h4 class="text-lg font-bold text-emerald-400 mt-0.5" id="kpi-qs-avg">0</h4></div>
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-blue-500"><p class="text-[10px] text-slate-400 font-bold uppercase">Pass Rate</p><h4 class="text-lg font-bold text-blue-400 mt-0.5" id="kpi-qs-pass">0%</h4></div>
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-rose-500"><p class="text-[10px] text-slate-400 font-bold uppercase">Fail Count</p><h4 class="text-lg font-bold text-rose-400 mt-0.5" id="kpi-qs-fail">0</h4></div>
+                    <div class="glass-panel p-3.5 rounded-2xl text-center border-t-2 border-t-indigo-500"><p class="text-[10px] text-slate-400 font-bold uppercase">Executives</p><h4 class="text-lg font-bold text-indigo-400 mt-0.5" id="kpi-qs-emps">0</h4></div>
+                </div>
+
+                <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-end gap-3">
+                    <div><label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">From</label><input type="date" id="date-from-qualityScore" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white"></div>
+                    <div><label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">To</label><input type="date" id="date-to-qualityScore" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white"></div>
+                    <button onclick="applyDateFilter('qualityScore')" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply</button>
+                    <button onclick="clearDateFilter('qualityScore')" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear</button>
+                    <span class="text-[10px] text-slate-500">Filters by column D (Audit Date).</span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="chart-card p-4 rounded-2xl"><p class="text-[11px] text-slate-400 font-semibold mb-3">Average Quality Score by Executive</p><div class="h-72"><canvas id="chart-qs-emp"></canvas></div></div>
+                    <div class="chart-card p-4 rounded-2xl"><p class="text-[11px] text-slate-400 font-semibold mb-3">Wrong Findings by Parameter</p><div class="h-72"><canvas id="chart-qs-param"></canvas></div></div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2">
+                    <div class="relative flex-1 max-w-xs">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="text" id="search-qualityScore" oninput="filterTable('qualityScore')" placeholder="Search executive name..." class="table-search w-full text-xs rounded-xl pl-8 pr-3 py-2 text-white placeholder-slate-500">
+                    </div>
+                    <button onclick="exportTableCSV('qualityScore', 'CPM_Quality_Score')" class="export-btn glass-panel text-[11px] font-semibold text-slate-300 px-3 py-2 rounded-xl flex items-center gap-2 self-start sm:self-auto">
+                        <i class="fa-solid fa-file-csv text-emerald-400"></i> Export CSV
+                    </button>
+                </div>
+                <div class="glass-panel rounded-2xl overflow-hidden border border-slate-800 p-2">
+                    <div class="top-scroll-wrapper id-scroll-qualityScore-top"><div class="dummy-space h-1"></div></div>
+                    <div class="custom-scroll max-h-[600px] id-scroll-qualityScore-body">
+                        <table class="w-full text-left border-collapse text-xs min-w-[800px]">
+                            <thead class="bg-slate-900 text-slate-300 font-bold uppercase sticky top-0 z-10" id="head-qualityScore"></thead>
+                            <tbody id="body-qualityScore" class="divide-y divide-slate-800/60"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. OVERALL RANK TAB -->
             <section id="tabOverallRank" class="tab-content hidden space-y-6">
                 <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-indigo-500">
-                    <p class="text-xs text-slate-400">Combines 4 verticals — Calling, Fresh Audit (by Center count), Cross Audit (by Center count), Live Audit. Each vertical's rank earns a score (Rank 1 = 2.5, Rank 2 = 2.4 ... down by 0.1 per rank, ties share the same rank and score). The 4 scores are summed into a Total Score, and employees are sorted into the Overall Rank by that total.</p>
+                    <p class="text-xs text-slate-400">Combines 4 verticals — Calling, Fresh Audit (by Center count), Quality Score (avg cross-audit score), Live Audit. Each vertical's rank earns a score (Rank 1 = 2.5, Rank 2 = 2.4 ... down by 0.1 per rank, ties share the same rank and score). The 4 scores are summed into a Total Score, and employees are sorted into the Overall Rank by that total.</p>
                 </div>
 
                 <div class="glass-panel p-3 rounded-2xl flex flex-wrap items-end gap-3">
@@ -717,8 +785,12 @@
                 activeBtn.classList.remove('text-slate-300');
             }
 
-            // Sync top scrollbar widths when switching tabs
-            setTimeout(syncScrollbars, 50);
+            // Sync top scrollbar widths + resize charts when switching tabs
+            setTimeout(() => {
+                syncScrollbars();
+                Object.values(charts).forEach(c => { try { c && c.resize(); } catch (e) {} });
+                if (tabId === 'tabQualityScore') renderQualityChart();
+            }, 60);
         }
 
         function setupScrollSync(topClass, bodyClass) {
@@ -759,6 +831,7 @@
             setupScrollSync('id-scroll-projSub-top', 'id-scroll-projSub-body');
             setupScrollSync('id-scroll-empSummary-top', 'id-scroll-empSummary-body');
             setupScrollSync('id-scroll-overallRank-top', 'id-scroll-overallRank-body');
+            setupScrollSync('id-scroll-qualityScore-top', 'id-scroll-qualityScore-body');
         }
 
         let retryTimer = null;
@@ -884,7 +957,7 @@
         }
 
         // ---- Charts ----
-        let charts = { coverage: null, audit: null, employees: null };
+        let charts = { coverage: null, audit: null, employees: null, quality: null, qualityParam: null };
         const chartTextColor = '#94a3b8';
         const chartGridColor = 'rgba(255,255,255,0.06)';
 
@@ -892,6 +965,7 @@
             renderCoverageChart();
             renderAuditChart();
             renderEmployeeChart();
+            renderQualityChart();
         }
 
         function num(id) {
@@ -904,11 +978,11 @@
             const ctx = document.getElementById('chart-coverage');
             if (!ctx || typeof Chart === 'undefined') return;
             const data = {
-                labels: ['Total Centers', 'CS Connect', 'Vendor Setup', 'Center Setup', 'Unique Centers (Submission)', 'Idle Cams', 'Cam As Per Audit'],
+                labels: ['Total Centers', 'CS Connect', 'Vendor Setup', 'Center Setup', 'Unique Centers (Submission)', 'Actual Centers', 'Idle Cams', 'Cam As Per Audit'],
                 datasets: [{
                     label: 'Count',
-                    data: [num('sum-calling-centers'), num('sum-calling-conf'), num('sum-calling-vendor'), num('sum-calling-setup'), num('sum-proj-centers'), num('sum-proj-idle'), num('sum-proj-auditcams')],
-                    backgroundColor: ['#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#14b8a6', '#f43f5e', '#818cf8'],
+                    data: [num('sum-calling-centers'), num('sum-calling-conf'), num('sum-calling-vendor'), num('sum-calling-setup'), num('sum-proj-centers'), num('sum-proj-actual'), num('sum-proj-idle'), num('sum-proj-auditcams')],
+                    backgroundColor: ['#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#14b8a6', '#0ea5e9', '#f43f5e', '#818cf8'],
                     borderRadius: 6,
                     maxBarThickness: 36
                 }]
@@ -957,10 +1031,8 @@
             const categories = [
                 { label: 'Calling', nameId: 'top-emp-calling-name', valId: 'top-emp-calling-val', color: '#6366f1' },
                 { label: 'Fresh Audit', nameId: 'top-emp-fresh-name', valId: 'top-emp-fresh-val', color: '#3b82f6' },
-                { label: 'Cross Audit', nameId: 'top-emp-cross-name', valId: 'top-emp-cross-val', color: '#06b6d4' },
                 { label: 'Live Audit', nameId: 'top-emp-live-name', valId: 'top-emp-live-val', color: '#f59e0b' },
-                { label: 'CSR Audit', nameId: 'top-emp-csr-name', valId: 'top-emp-csr-val', color: '#10b981' },
-                { label: 'Alert Marking', nameId: 'top-emp-alert-name', valId: 'top-emp-alert-val', color: '#f43f5e' }
+                { label: 'CSR Audit', nameId: 'top-emp-csr-name', valId: 'top-emp-csr-val', color: '#10b981' }
             ];
 
             const labels = categories.map(c => {
@@ -1006,10 +1078,12 @@
             const empSummaryRows = findSheet(data, ['daily kra']);
             const escCenterRows = findSheet(data, ['center side']);
             const escVendorRows = findSheet(data, ['vendor side']);
+            const qualityRows = findSheet(data, ['cctv data audit quality', 'audit quality score', 'data audit quality', 'quality score', 'cross audit quality']);
 
             processCalling(callingRows);
             processLiveAudit(liveAuditRows);
             processProjectSubmission(projSubRows);
+            processQualityScore(qualityRows);        // must run before Employee Summary (Overall Rank uses it)
             processEmployeeSummary(empSummaryRows);
             processEscalation(escCenterRows, escVendorRows);
         }
@@ -1054,7 +1128,7 @@
         }
 
         // ---- Date range filtering ----
-        let rawRows = { calling: null, liveAudit: null, projSub: null, empSummary: null, escCenter: null, escVendor: null };
+        let rawRows = { calling: null, liveAudit: null, projSub: null, empSummary: null, escCenter: null, escVendor: null, qualityScore: null };
         let dateFilters = {
             calling: { from: '', to: '' },
             liveAudit: { from: '', to: '' },
@@ -1062,7 +1136,8 @@
             empSummary: { from: '', to: '' },
             escalation: { from: '', to: '' },
             ranking: { from: '', to: '' },
-            overallRank: { from: '', to: '' }
+            overallRank: { from: '', to: '' },
+            qualityScore: { from: '', to: '' }
         };
 
         function parseFlexibleDate(val) {
@@ -1131,7 +1206,7 @@
         function applyGlobalDateFilter() {
             const from = document.getElementById('date-from-global').value;
             const to = document.getElementById('date-to-global').value;
-            ['calling', 'liveAudit', 'projSub', 'empSummary', 'escalation', 'ranking', 'overallRank'].forEach(key => {
+            ['calling', 'liveAudit', 'projSub', 'empSummary', 'escalation', 'ranking', 'overallRank', 'qualityScore'].forEach(key => {
                 const fEl = document.getElementById('date-from-' + key);
                 const tEl = document.getElementById('date-to-' + key);
                 if (fEl) fEl.value = from;
@@ -1157,6 +1232,7 @@
             if (key === 'escalation') renderEscalation();
             if (key === 'ranking') renderRanking();
             if (key === 'overallRank') renderOverallRank();
+            if (key === 'qualityScore') renderQualityScore();
         }
 
         // 1. CALLING MODULE
@@ -1364,7 +1440,7 @@
 
             let head = rows[0];
             const targetCols = [
-                'project code', 'client name', 'unique center',
+                'project code', 'client name', 'unique center', 'actual centers',
                 'total idel cam', 'total cam as per audit', 'clint submission', 'audit status'
             ];
 
@@ -1389,7 +1465,7 @@
 
             let dataRows = [];
             let uniqueProjCodes = new Set();
-            let sumUniqCenters = 0, sumIdle = 0, sumAuditCams = 0;
+            let sumUniqCenters = 0, sumActualCenters = 0, sumIdle = 0, sumAuditCams = 0;
             let auditDoneCenters = 0, auditPendingCenters = 0;
             const auditDoneIdx = 12; // Spreadsheet column M — "Audit Done" (centers)
             const auditPendingIdx = 13; // Spreadsheet column N — "Audit Pending" (centers)
@@ -1406,8 +1482,9 @@
                     if (projCode) uniqueProjCodes.add(projCode.toString().trim());
 
                     sumUniqCenters += Number(r[indices[2]]) || 0;
-                    sumIdle += Number(r[indices[3]]) || 0;
-                    sumAuditCams += Number(r[indices[4]]) || 0;
+                    sumActualCenters += Number(r[indices[3]]) || 0;
+                    sumIdle += Number(r[indices[4]]) || 0;
+                    sumAuditCams += Number(r[indices[5]]) || 0;
 
                     auditDoneCenters += Number(r[auditDoneIdx]) || 0;
                     auditPendingCenters += Number(r[auditPendingIdx]) || 0;
@@ -1436,6 +1513,7 @@
 
             document.getElementById('kpi-ps-uniq-proj').innerText = totalUniqueProjects;
             document.getElementById('kpi-ps-uniq-centers').innerText = sumUniqCenters.toLocaleString();
+            document.getElementById('kpi-ps-actual').innerText = sumActualCenters.toLocaleString();
             document.getElementById('kpi-ps-idle').innerText = sumIdle.toLocaleString();
             document.getElementById('kpi-ps-auditcam').innerText = sumAuditCams.toLocaleString();
             document.getElementById('kpi-ps-audit-done').innerText = auditDoneCenters.toLocaleString();
@@ -1443,6 +1521,7 @@
 
             document.getElementById('sum-proj-unique').innerText = totalUniqueProjects;
             document.getElementById('sum-proj-centers').innerText = sumUniqCenters.toLocaleString();
+            document.getElementById('sum-proj-actual').innerText = sumActualCenters.toLocaleString();
             document.getElementById('sum-proj-idle').innerText = sumIdle.toLocaleString();
             document.getElementById('sum-proj-auditcams').innerText = sumAuditCams.toLocaleString();
             document.getElementById('sum-proj-audit-done').innerText = auditDoneCenters.toLocaleString();
@@ -1491,15 +1570,8 @@
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CALLS</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTER - FRESH AUDIT</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CAMERA - FRESH AUDIT</th>
-                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTER - CROSS AUDIT</th>
-                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CAMERA - CROSS AUDIT</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL LIVE AUDIT CASE FOUND</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTERS – CSR AUDIT</th>
-                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTERS – DG DELIVERY PHOTO AUDIT</th>
-                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL DG VENDOR SEARCHING</th>
-                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CENTER FOR - CAMERA LIST</th>
-                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL CAMERA FOR - CAMERA LIST</th>
-                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL ALERT MARKING</th>
             </tr>`;
 
             const perfByEmployee = {};
@@ -1543,25 +1615,25 @@
 
             const employees = Object.entries(perfByEmployee).sort((a, b) => b[1].calls - a[1].calls);
             let bodyHtml = "";
-            const totals = { calls: 0, freshCenter: 0, freshCamera: 0, crossCenter: 0, crossCamera: 0, live: 0, csr: 0, dgPhoto: 0, dgVendor: 0, centerList: 0, cameraList: 0, alert: 0 };
+            const totals = { calls: 0, freshCenter: 0, freshCamera: 0, live: 0, csr: 0 };
             const cell = (v) => `<td class="p-3 border-b border-slate-800/50 text-right">${v.toLocaleString()}</td>`;
 
             employees.forEach(([name, p]) => {
                 Object.keys(totals).forEach(k => totals[k] += p[k]);
                 bodyHtml += `<tr class="hover:bg-slate-800/40">
                     <td class="p-3 border-b border-slate-800/50 text-left font-semibold whitespace-nowrap">${name}</td>
-                    ${cell(p.calls)}${cell(p.freshCenter)}${cell(p.freshCamera)}${cell(p.crossCenter)}${cell(p.crossCamera)}${cell(p.live)}${cell(p.csr)}${cell(p.dgPhoto)}${cell(p.dgVendor)}${cell(p.centerList)}${cell(p.cameraList)}${cell(p.alert)}
+                    ${cell(p.calls)}${cell(p.freshCenter)}${cell(p.freshCamera)}${cell(p.live)}${cell(p.csr)}
                 </tr>`;
             });
             if (employees.length > 0) {
                 bodyHtml += `<tr class="bg-indigo-950/60 font-bold text-indigo-300">
                     <td class="p-3 border-b border-slate-800 text-left">TOTAL</td>
-                    ${cell(totals.calls)}${cell(totals.freshCenter)}${cell(totals.freshCamera)}${cell(totals.crossCenter)}${cell(totals.crossCamera)}${cell(totals.live)}${cell(totals.csr)}${cell(totals.dgPhoto)}${cell(totals.dgVendor)}${cell(totals.centerList)}${cell(totals.cameraList)}${cell(totals.alert)}
+                    ${cell(totals.calls)}${cell(totals.freshCenter)}${cell(totals.freshCamera)}${cell(totals.live)}${cell(totals.csr)}
                 </tr>`;
             }
 
             document.getElementById('body-empSummary').innerHTML = bodyHtml ||
-                `<tr><td class="p-4 text-center text-slate-500" colspan="13">No entries in this date range.</td></tr>`;
+                `<tr><td class="p-4 text-center text-slate-500" colspan="6">No entries in this date range.</td></tr>`;
 
             const topOf = (key) => {
                 let best = { name: '-', val: -1 };
@@ -1571,27 +1643,40 @@
             const topEmp = {
                 calling: topOf('calls'),
                 fresh: topOf('freshCenter'),
-                cross: topOf('crossCenter'),
-                live: topOf('live'), csr: topOf('csr'), alert: topOf('alert')
+                live: topOf('live'), csr: topOf('csr')
             };
 
-            document.getElementById('top-emp-calling-name').innerText = topEmp.calling.name;
-            document.getElementById('top-emp-calling-val').innerText = Math.max(topEmp.calling.val, 0).toLocaleString();
+            const setTop = (id, best) => {
+                var n = document.getElementById('top-emp-' + id + '-name'); if (n) n.innerText = best.name;
+                var v = document.getElementById('top-emp-' + id + '-val');  if (v) v.innerText = Math.max(best.val, 0).toLocaleString();
+            };
+            setTop('calling', topEmp.calling);
+            setTop('fresh', topEmp.fresh);
+            setTop('live', topEmp.live);
+            setTop('csr', topEmp.csr);
 
-            document.getElementById('top-emp-fresh-name').innerText = topEmp.fresh.name;
-            document.getElementById('top-emp-fresh-val').innerText = Math.max(topEmp.fresh.val, 0).toLocaleString();
+            // "Top Performers — By Vertical" cards on the Executive Summary tab
+            window.__topByVertical = [
+                { label: 'Calling',     e: topEmp.calling, accent: 'border-l-indigo-400' },
+                { label: 'Fresh Audit', e: topEmp.fresh,   accent: 'border-l-blue-400' },
+                { label: 'Live Audit',  e: topEmp.live,    accent: 'border-l-amber-400' }
+            ];
+            renderTopVerticals();
+        }
 
-            document.getElementById('top-emp-cross-name').innerText = topEmp.cross.name;
-            document.getElementById('top-emp-cross-val').innerText = Math.max(topEmp.cross.val, 0).toLocaleString();
-
-            document.getElementById('top-emp-live-name').innerText = topEmp.live.name;
-            document.getElementById('top-emp-live-val').innerText = Math.max(topEmp.live.val, 0).toLocaleString();
-
-            document.getElementById('top-emp-csr-name').innerText = topEmp.csr.name;
-            document.getElementById('top-emp-csr-val').innerText = Math.max(topEmp.csr.val, 0).toLocaleString();
-
-            document.getElementById('top-emp-alert-name').innerText = topEmp.alert.name;
-            document.getElementById('top-emp-alert-val').innerText = Math.max(topEmp.alert.val, 0).toLocaleString();
+        function renderTopVerticals() {
+            const list = window.__topByVertical || [];
+            const wrap = document.getElementById('top3-wrapper');
+            if (!wrap) return;
+            wrap.innerHTML = list.map(function (x) {
+                const name = (x.e && x.e.name) ? x.e.name : '-';
+                const val = x.e ? Math.max(x.e.val, 0).toLocaleString() : '0';
+                return '<div class="glass-panel p-4 rounded-2xl border-l-4 ' + x.accent + '">' +
+                    '<p class="text-[11px] text-slate-400 font-medium">Top ' + x.label + '</p>' +
+                    '<h4 class="text-lg font-extrabold text-white mt-1 truncate">' + name + '</h4>' +
+                    '<p class="text-xs text-slate-400 mt-0.5">' + x.label + ': <span class="text-indigo-300 font-bold">' + val + '</span></p>' +
+                    '</div>';
+            }).join('');
         }
 
         // 6. PERFORMANCE RANKING MODULE (reuses Daily KRA data already loaded for Employee Summary)
@@ -1668,7 +1753,6 @@
             const verticals = [
                 { key: 'calling', title: 'Calling', columns: [{ label: 'TOTAL CALLS', key: 'calls' }], rankKey: 'calls', accent: 'border-l-indigo-500' },
                 { key: 'fresh', title: 'Fresh Audit', columns: [{ label: 'TOTAL CENTER - FRESH AUDIT', key: 'freshCenter' }, { label: 'TOTAL CAMERA - FRESH AUDIT', key: 'freshCamera' }], rankKey: 'freshCenter', accent: 'border-l-blue-500' },
-                { key: 'cross', title: 'Cross Audit', columns: [{ label: 'TOTAL CENTER - CROSS AUDIT', key: 'crossCenter' }, { label: 'TOTAL CAMERA - CROSS AUDIT', key: 'crossCamera' }], rankKey: 'crossCenter', accent: 'border-l-cyan-500' },
                 { key: 'live', title: 'Live Audit', columns: [{ label: 'TOTAL LIVE AUDIT', key: 'live' }], rankKey: 'live', accent: 'border-l-amber-500' },
                 { key: 'csr', title: 'CSR Audit', columns: [{ label: 'TOTAL CSR AUDIT', key: 'csr' }], rankKey: 'csr', accent: 'border-l-emerald-500' }
             ];
@@ -1676,7 +1760,9 @@
             let wrapperHtml = "";
             verticals.forEach(v => {
                 const ranks = computeRanks(employees, v.rankKey);
-                const sorted = [...employees].sort((a, b) => b[v.rankKey] - a[v.rankKey]);
+                let sorted = [...employees].sort((a, b) => b[v.rankKey] - a[v.rankKey]);
+                // CSR Audit: only show people who actually did CSR audits
+                if (v.key === 'csr') sorted = sorted.filter(e => (Number(e[v.rankKey]) || 0) > 0);
 
                 let rowsHtml = "";
                 sorted.forEach((e, idx) => {
@@ -1715,6 +1801,195 @@
             document.getElementById('ranking-tables-wrapper').innerHTML = wrapperHtml;
         }
 
+        // ===== QUALITY SCORE MODULE (CCTV Data Audit Quality Score sheet) =====
+        function qsColIndices() {
+            const rows = rawRows.qualityScore;
+            if (!rows || rows.length < 2) return null;
+            const head = rows[0];
+            const lc = h => (h || '').toString().toLowerCase();
+            let nameIdx = head.findIndex(h => lc(h).includes('employee name'));
+            if (nameIdx === -1) nameIdx = head.findIndex(h => lc(h) === 'name' || lc(h).includes('executive'));
+            if (nameIdx === -1) nameIdx = 0;                       // column A
+            let dateIdx = head.findIndex(h => lc(h).includes('date'));
+            if (dateIdx === -1) dateIdx = 3;                       // column D
+            let scoreIdx = head.findIndex(h => lc(h).includes('total scoring'));
+            if (scoreIdx === -1) scoreIdx = head.findIndex(h => lc(h).includes('scoring') || lc(h).includes('total score'));
+            if (scoreIdx === -1) scoreIdx = 21;                    // column V
+            const skip = ['sl', 'emp code', 'employee code', 'e-mail', 'email', 'project', 'auditor', 'feedback', 'tc code'];
+            const paramCols = [];
+            for (let c = 0; c < head.length; c++) {
+                if (c === nameIdx || c === dateIdx || c === scoreIdx) continue;
+                const hv = lc(head[c]);
+                if (!hv || hv === 'code') continue;
+                if (skip.some(k => hv.includes(k))) continue;
+                paramCols.push({ idx: c, label: head[c].toString().trim() });
+            }
+            return { head, nameIdx, dateIdx, scoreIdx, paramCols };
+        }
+
+        // avg Total Scoring per employee, within a date range — used by Overall Rank
+        const normName = s => (s || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+
+        // returns a lookup function: name -> avg quality score (0 if that employee has no cross audits in range)
+        function qualityAvgMap(from, to) {
+            const ci = qsColIndices();
+            const acc = {};
+            if (ci) {
+                const rows = rawRows.qualityScore;
+                for (let i = 1; i < rows.length; i++) {
+                    const r = rows[i];
+                    if (!r || !r[ci.nameIdx]) continue;
+                    const nm = normName(r[ci.nameIdx]);
+                    if (!nm || nm === 'total') continue;
+                    if (!inDateRange(r[ci.dateIdx], from, to)) continue;
+                    if (!acc[nm]) acc[nm] = { sum: 0, n: 0 };
+                    acc[nm].sum += Number(r[ci.scoreIdx]) || 0;
+                    acc[nm].n++;
+                }
+            }
+            const map = {};
+            Object.keys(acc).forEach(nm => { map[nm] = acc[nm].n ? (acc[nm].sum / acc[nm].n) : 0; });
+            if (ci) {
+                const unmatched = Object.keys(acc);
+                if (unmatched.length) console.log('[CPM Dashboard] Quality Score — executives found in CCTV sheet:', unmatched, '— these must match the "Employee Name" spelling in Daily KRA for the Overall Rank to pick them up.');
+            }
+            return nm => map[normName(nm)] || 0;
+        }
+
+        function processQualityScore(rows) {
+            rawRows.qualityScore = rows;
+            renderQualityScore();
+        }
+
+        function renderQualityScore() {
+            const thead = document.getElementById('head-qualityScore');
+            const tbody = document.getElementById('body-qualityScore');
+            const ci = qsColIndices();
+            if (!ci) {
+                if (thead) thead.innerHTML = '';
+                if (tbody) tbody.innerHTML = '<tr><td class="p-4 text-center text-slate-500" colspan="7">Quality Score sheet not received from the API. Make sure the backend Apps Script returns the "CCTV Data Audit Quality Score" tab.</td></tr>';
+                ['kpi-qs-audits', 'kpi-qs-avg', 'kpi-qs-fail', 'kpi-qs-emps'].forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '0'; });
+                const p = document.getElementById('kpi-qs-pass'); if (p) p.innerText = '0%';
+                return;
+            }
+            const rows = rawRows.qualityScore;
+            const lc = h => (h || '').toString().toLowerCase();
+            const from = dateFilters.qualityScore.from, to = dateFilters.qualityScore.to;
+
+            const byEmp = {};
+            const paramWrong = {};
+            ci.paramCols.forEach(p => paramWrong[p.label] = 0);
+            let nAll = 0, sumAll = 0, passAll = 0;
+
+            for (let i = 1; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[ci.nameIdx]) continue;
+                const nm = r[ci.nameIdx].toString().trim();
+                if (!nm || nm.toLowerCase() === 'total') continue;
+                if (!inDateRange(r[ci.dateIdx], from, to)) continue;
+                const sc = Number(r[ci.scoreIdx]) || 0;
+                nAll++; sumAll += sc; if (sc >= 100) passAll++;
+                if (!byEmp[nm]) byEmp[nm] = { name: nm, n: 0, sum: 0, pass: 0, wrong: 0, params: {} };
+                const e = byEmp[nm];
+                e.n++; e.sum += sc; if (sc >= 100) e.pass++;
+                ci.paramCols.forEach(p => {
+                    if (lc(r[p.idx]) === 'wrong') { e.wrong++; e.params[p.label] = (e.params[p.label] || 0) + 1; paramWrong[p.label]++; }
+                });
+            }
+
+            const list = Object.values(byEmp).map(e => {
+                let weak = '-', c = 0;
+                Object.keys(e.params).forEach(k => { if (e.params[k] > c) { c = e.params[k]; weak = k; } });
+                return { name: e.name, audits: e.n, avg: e.n ? Math.round(e.sum / e.n) : 0, pass: e.pass, fail: e.n - e.pass, weak, weakN: c };
+            }).sort((a, b) => b.avg - a.avg || b.audits - a.audits);
+
+            document.getElementById('kpi-qs-audits').innerText = nAll.toLocaleString();
+            document.getElementById('kpi-qs-avg').innerText = nAll ? Math.round(sumAll / nAll) : 0;
+            document.getElementById('kpi-qs-pass').innerText = (nAll ? Math.round(passAll / nAll * 100) : 0) + '%';
+            document.getElementById('kpi-qs-fail').innerText = (nAll - passAll).toLocaleString();
+            document.getElementById('kpi-qs-emps').innerText = list.length;
+
+            thead.innerHTML = `<tr>
+                <th class="p-3 border-b border-slate-800 text-left">SL</th>
+                <th class="p-3 border-b border-slate-800 text-left">EXECUTIVE</th>
+                <th class="p-3 border-b border-slate-800 text-right">AUDITS</th>
+                <th class="p-3 border-b border-slate-800 text-right">AVG QUALITY SCORE</th>
+                <th class="p-3 border-b border-slate-800 text-right">PASS</th>
+                <th class="p-3 border-b border-slate-800 text-right">FAIL</th>
+                <th class="p-3 border-b border-slate-800 text-left">WEAKEST PARAMETER</th>
+            </tr>`;
+            const scCls = v => v >= 80 ? 'text-emerald-400' : (v >= 50 ? 'text-amber-400' : 'text-rose-400');
+            let body = list.map((e, i) => `<tr class="hover:bg-slate-800/40">
+                <td class="p-3 border-b border-slate-800/50 text-left">${i + 1}</td>
+                <td class="p-3 border-b border-slate-800/50 text-left font-semibold whitespace-nowrap">${e.name}</td>
+                <td class="p-3 border-b border-slate-800/50 text-right">${e.audits}</td>
+                <td class="p-3 border-b border-slate-800/50 text-right font-bold ${scCls(e.avg)}">${e.avg}</td>
+                <td class="p-3 border-b border-slate-800/50 text-right text-emerald-400">${e.pass}</td>
+                <td class="p-3 border-b border-slate-800/50 text-right text-rose-400">${e.fail}</td>
+                <td class="p-3 border-b border-slate-800/50 text-left">${e.weak === '-' ? '<span class="text-slate-500">none</span>' : e.weak + ' <span class="text-slate-500">(' + e.weakN + ')</span>'}</td>
+            </tr>`).join('');
+            if (!body) body = '<tr><td class="p-4 text-center text-slate-500" colspan="7">No audits in this date range.</td></tr>';
+            tbody.innerHTML = body;
+
+            window.__qsList = list;
+            window.__qsParamWrong = paramWrong;
+            renderQualityChart();
+            setTimeout(syncScrollbars, 40);
+        }
+
+        function renderQualityChart() {
+            const list = window.__qsList || [];
+            const pw = window.__qsParamWrong || {};
+            const c1 = document.getElementById('chart-qs-emp');
+            if (c1 && typeof Chart !== 'undefined') {
+                const d = { labels: list.map(e => e.name), datasets: [{ data: list.map(e => e.avg), backgroundColor: list.map(e => e.avg >= 80 ? '#10b981' : (e.avg >= 50 ? '#f59e0b' : '#f43f5e')), borderRadius: 6, maxBarThickness: 34 }] };
+                if (charts.quality) { charts.quality.data = d; charts.quality.update(); }
+                else charts.quality = new Chart(c1, { type: 'bar', data: d, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: chartTextColor, font: { size: 9 } }, grid: { display: false } }, y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor }, grid: { color: chartGridColor } } } } });
+            }
+            const c2 = document.getElementById('chart-qs-param');
+            if (c2 && typeof Chart !== 'undefined') {
+                const entries = Object.entries(pw).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+                const d = { labels: entries.map(e => e[0]), datasets: [{ data: entries.map(e => e[1]), backgroundColor: '#6366f1', borderRadius: 6, maxBarThickness: 26 }] };
+                if (charts.qualityParam) { charts.qualityParam.data = d; charts.qualityParam.update(); }
+                else charts.qualityParam = new Chart(c2, { type: 'bar', data: d, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { color: chartTextColor }, grid: { color: chartGridColor } }, y: { ticks: { color: chartTextColor, font: { size: 9 } }, grid: { display: false } } } } });
+            }
+        }
+
+        // ---- Download the active tab as PDF ----
+        async function downloadActiveTabPDF() {
+            const active = document.querySelector('.tab-content:not(.hidden)');
+            if (!active) return;
+            if (typeof html2canvas === 'undefined' || !window.jspdf) { alert('PDF library still loading — try again in a few seconds.'); return; }
+            const label = document.querySelector('[onclick="downloadActiveTabPDF()"] span');
+            const old = label ? label.innerText : '';
+            if (label) label.innerText = 'Rendering…';
+            try {
+                const canvas = await html2canvas(active, { backgroundColor: '#0b0f19', scale: 2, useCORS: true, windowWidth: active.scrollWidth });
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pw = pdf.internal.pageSize.getWidth();
+                const ph = pdf.internal.pageSize.getHeight();
+                const imgH = canvas.height * pw / canvas.width;
+                const img = canvas.toDataURL('image/png');
+                let heightLeft = imgH, pos = 0;
+                pdf.addImage(img, 'PNG', 0, pos, pw, imgH);
+                heightLeft -= ph;
+                while (heightLeft > 0) {
+                    pos -= ph;
+                    pdf.addPage();
+                    pdf.addImage(img, 'PNG', 0, pos, pw, imgH);
+                    heightLeft -= ph;
+                }
+                const tabName = (document.querySelector('.tab-btn.active-tab span')?.innerText || 'Dashboard').trim().replace(/\s+/g, '_');
+                pdf.save(`CPM_${tabName}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            } catch (e) {
+                console.error(e);
+                alert('PDF export failed: ' + e.message);
+            } finally {
+                if (label) label.innerText = old || 'Download PDF';
+            }
+        }
+
         // 7. OVERALL RANK MODULE (reuses Daily KRA data already loaded for Employee Summary)
         function pointsForRank2(rank) {
             return 2.5 - (rank - 1) * 0.1;
@@ -1733,7 +2008,6 @@
             const approvalIdx = find('approval status');
             const callsIdx = find('centers done calling');
             const freshCenterIdx = find('centers audit');
-            const crossCenterIdx = find('centers checked');
             const liveIdx = find('cases found');
 
             const perf = {};
@@ -1743,7 +2017,7 @@
 
                 const name = (nameIdx !== -1 && r[nameIdx]) ? r[nameIdx].toString().trim() : 'Unknown';
                 if (!perf[name]) {
-                    perf[name] = { code: codeIdx !== -1 ? (r[codeIdx] || '') : '', calls: 0, freshCenter: 0, crossCenter: 0, live: 0 };
+                    perf[name] = { code: codeIdx !== -1 ? (r[codeIdx] || '') : '', calls: 0, freshCenter: 0, live: 0 };
                 }
 
                 if (approvalIdx !== -1 && !(r[approvalIdx] || '').toString().trim().toLowerCase().includes('approved')) continue;
@@ -1752,27 +2026,28 @@
                 const p = perf[name];
                 p.calls += Number(r[callsIdx]) || 0;
                 p.freshCenter += Number(r[freshCenterIdx]) || 0;
-                p.crossCenter += Number(r[crossCenterIdx]) || 0;
                 p.live += Number(r[liveIdx]) || 0;
             }
 
-            const employees = Object.entries(perf).map(([name, p]) => ({ name, code: p.code, calls: p.calls, freshCenter: p.freshCenter, crossCenter: p.crossCenter, live: p.live }));
+            // Quality Score = avg Total Scoring per employee from the CCTV Data Audit Quality Score sheet, same date range
+            const qLookup = qualityAvgMap(dateFilters.overallRank.from, dateFilters.overallRank.to);
+            const employees = Object.entries(perf).map(([name, p]) => ({ name, code: p.code, calls: p.calls, freshCenter: p.freshCenter, quality: qLookup(name), live: p.live }));
 
             const callRanks = computeRanks(employees, 'calls');
             const freshRanks = computeRanks(employees, 'freshCenter');
-            const crossRanks = computeRanks(employees, 'crossCenter');
+            const qualityRanks = computeRanks(employees, 'quality');
             const liveRanks = computeRanks(employees, 'live');
 
             employees.forEach(e => {
                 e.callRank = callRanks[e.name];
                 e.freshRank = freshRanks[e.name];
-                e.crossRank = crossRanks[e.name];
+                e.qualityRank = qualityRanks[e.name];
                 e.liveRank = liveRanks[e.name];
                 e.callScore = pointsForRank2(e.callRank);
                 e.freshScore = pointsForRank2(e.freshRank);
-                e.crossScore = pointsForRank2(e.crossRank);
+                e.qScore = pointsForRank2(e.qualityRank);
                 e.liveScore = pointsForRank2(e.liveRank);
-                e.totalScore = e.callScore + e.freshScore + e.crossScore + e.liveScore;
+                e.totalScore = e.callScore + e.freshScore + e.qScore + e.liveScore;
             });
 
             const overallRanks = computeRanks(employees, 'totalScore');
@@ -1785,7 +2060,7 @@
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-left">EMPLOYEE CODE</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">CALLING SCORE</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">FRESH AUDIT SCORE</th>
-                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">CROSS AUDIT SCORE</th>
+                <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">QUALITY SCORE</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">LIVE AUDIT SCORE</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">TOTAL SCORE</th>
                 <th class="p-3 border-b border-slate-800 whitespace-nowrap text-right">OVERALL RANK</th>
@@ -1799,7 +2074,7 @@
                     <td class="p-3 border-b border-slate-800/50 text-left">${e.code}</td>
                     <td class="p-3 border-b border-slate-800/50 text-right">${e.callScore.toFixed(1)}</td>
                     <td class="p-3 border-b border-slate-800/50 text-right">${e.freshScore.toFixed(1)}</td>
-                    <td class="p-3 border-b border-slate-800/50 text-right">${e.crossScore.toFixed(1)}</td>
+                    <td class="p-3 border-b border-slate-800/50 text-right">${e.qScore.toFixed(1)}</td>
                     <td class="p-3 border-b border-slate-800/50 text-right">${e.liveScore.toFixed(1)}</td>
                     <td class="p-3 border-b border-slate-800/50 text-right font-bold text-white">${e.totalScore.toFixed(1)}</td>
                     <td class="p-3 border-b border-slate-800/50 text-right font-extrabold text-indigo-300">#${e.overallRank}</td>
