@@ -1436,24 +1436,48 @@
             if (!rows || rows.length < 2) return;
 
             let head = rows[0];
-            const targetCols = [
-                'project code', 'client name', 'unique center', 'actual centers',
-                'total idel cam', 'total cam as per audit', 'clint submission', 'audit status'
-            ];
-
-            let indices = [];
-            targetCols.forEach(tc => {
-                indices.push(findHeaderIdx(head, tc));
-            });
             let dateIdx = 2; // Spreadsheet column C — confirmed date column
 
+            function findCol(label, needle, fallbackIdx) {
+                let idx = findHeaderIdx(head, needle);
+                if (idx === -1) {
+                    console.warn('[CPM Dashboard] "' + label + '" column not found by header text in Project Submission sheet — falling back to column index ' + fallbackIdx + '.');
+                    idx = fallbackIdx;
+                }
+                return idx;
+            }
+
+            const codeIdx = findHeaderIdx(head, 'project code');
+            const clientIdx = findHeaderIdx(head, 'client name');
+            const uniqueCenterIdx = findHeaderIdx(head, 'unique center');
+            const actualCentersIdx = findHeaderIdx(head, 'actual centers');
+            // "Total Centers - Received to CPM Team" — spreadsheet column J.
+            const receivedCentersIdx = findCol('Total Centers - Received to CPM Team', 'received to cpm team', 9);
+            // "Audit Done" / "Audit Pending" — spreadsheet columns M / N.
+            const auditDoneIdx = findCol('Audit Done', 'audit done', 12);
+            const auditPendingIdx = findCol('Audit Pending', 'audit pending', 13);
+            const clientSubIdx = findHeaderIdx(head, 'clint submission');
+            const auditStatusIdx = findHeaderIdx(head, 'audit status');
+
+            const columns = [
+                { label: 'PROJECT CODE', idx: codeIdx, align: 'left' },
+                { label: 'CLIENT NAME', idx: clientIdx, align: 'left' },
+                { label: 'UNIQUE CENTER', idx: uniqueCenterIdx, align: 'right' },
+                { label: 'ACTUAL CENTERS', idx: actualCentersIdx, align: 'right' },
+                { label: 'TOTAL CENTERS - RECEIVED TO CPM TEAM', idx: receivedCentersIdx, align: 'right' },
+                { label: 'AUDIT DONE', idx: auditDoneIdx, align: 'right' },
+                { label: 'AUDIT PENDING', idx: auditPendingIdx, align: 'right' },
+                { label: 'CLINT SUBMISSION', idx: clientSubIdx, align: 'right' },
+                { label: 'AUDIT STATUS', idx: auditStatusIdx, align: 'right' }
+            ];
+
             console.log('[CPM Dashboard] Project Submission RAW HEADER ROW:', head.map((h, i) => `[${i}] "${h}"`));
-            console.log('[CPM Dashboard] Project Submission column detection:', targetCols.map((tc, i) => `${tc} => index ${indices[i]}`), '| dateIdx:', dateIdx);
+            console.log('[CPM Dashboard] Project Submission column detection:', columns.map(c => `${c.label} => index ${c.idx}`), '| dateIdx:', dateIdx);
 
             let headHtml = "<tr>";
-            targetCols.forEach((tc, i) => {
-                let title = indices[i] !== -1 ? head[indices[i]] : tc.toUpperCase();
-                let alignClass = i <= 1 ? 'text-left' : 'text-right';
+            columns.forEach(c => {
+                let title = c.idx !== -1 && head[c.idx] ? head[c.idx] : c.label;
+                let alignClass = c.align === 'left' ? 'text-left' : 'text-right';
                 headHtml += `<th class="p-3 border-b border-slate-800 whitespace-nowrap ${alignClass}">${title}</th>`;
             });
             headHtml += "</tr>";
@@ -1461,17 +1485,8 @@
 
             let dataRows = [];
             let uniqueProjCodes = new Set();
-            let sumUniqCenters = 0, sumActualCenters = 0, sumIdle = 0, sumAuditCams = 0;
+            let sumUniqCenters = 0, sumActualCenters = 0;
             let auditDoneCenters = 0, auditPendingCenters = 0;
-            let auditDoneIdx = findHeaderIdx(head, 'audit done');
-            let auditPendingIdx = findHeaderIdx(head, 'audit pending');
-            if (auditDoneIdx === -1) { console.warn('[CPM Dashboard] "Audit Done" column not found by header text in Project Submission sheet — falling back to column index 12 (M).'); auditDoneIdx = 12; }
-            if (auditPendingIdx === -1) { console.warn('[CPM Dashboard] "Audit Pending" column not found by header text in Project Submission sheet — falling back to column index 13 (N).'); auditPendingIdx = 13; }
-
-            // "Total Centers" KPI (both here and in Executive Summary) sources from
-            // "Total Centers - Received to CPM Team" — spreadsheet column J.
-            let receivedCentersIdx = findHeaderIdx(head, 'received to cpm team');
-            if (receivedCentersIdx === -1) { console.warn('[CPM Dashboard] "Total Centers - Received to CPM Team" column not found by header text in Project Submission sheet — falling back to column index 9 (J).'); receivedCentersIdx = 9; }
 
             for (let i = 1; i < rows.length; i++) {
                 let r = rows[i];
@@ -1481,13 +1496,11 @@
                 if (!isTotal) {
                     if (!inDateRange(dateIdx !== -1 ? r[dateIdx] : null, dateFilters.projSub.from, dateFilters.projSub.to)) continue;
                     dataRows.push(r);
-                    let projCode = indices[0] !== -1 ? r[indices[0]] : null;
+                    let projCode = codeIdx !== -1 ? r[codeIdx] : null;
                     if (projCode) uniqueProjCodes.add(projCode.toString().trim());
 
                     sumUniqCenters += Number(r[receivedCentersIdx]) || 0;
-                    sumActualCenters += Number(r[indices[3]]) || 0;
-                    sumIdle += Number(r[indices[4]]) || 0;
-                    sumAuditCams += Number(r[indices[5]]) || 0;
+                    sumActualCenters += Number(r[actualCentersIdx]) || 0;
 
                     auditDoneCenters += Number(r[auditDoneIdx]) || 0;
                     auditPendingCenters += Number(r[auditPendingIdx]) || 0;
@@ -1502,9 +1515,9 @@
             let bodyHtml = "";
             dataRows.forEach(r => {
                 bodyHtml += `<tr class="hover:bg-slate-800/40">`;
-                indices.forEach((colIdx, cellIdx) => {
-                    let val = colIdx !== -1 && r[colIdx] !== undefined ? r[colIdx] : '';
-                    let alignClass = cellIdx <= 1 ? 'text-left font-semibold' : 'text-right';
+                columns.forEach(c => {
+                    let val = c.idx !== -1 && r[c.idx] !== undefined ? r[c.idx] : '';
+                    let alignClass = c.align === 'left' ? 'text-left font-semibold' : 'text-right';
                     bodyHtml += `<td class="p-3 border-b border-slate-800/50 ${alignClass} whitespace-nowrap">${val}</td>`;
                 });
                 bodyHtml += "</tr>";
