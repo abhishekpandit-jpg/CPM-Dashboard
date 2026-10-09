@@ -360,6 +360,83 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Team Productivity — Day-wise by Vertical -->
+                <div>
+                    <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line"></i> Team Productivity — Day-wise by Vertical
+                    </h3>
+                    <div class="chart-card p-4 rounded-2xl">
+                        <div class="flex flex-wrap items-end gap-3 mb-4">
+                            <div>
+                                <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">From</label>
+                                <input type="date" id="date-from-teamProd" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">To</label>
+                                <input type="date" id="date-to-teamProd" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white">
+                            </div>
+                            <button onclick="applyDateFilter('teamProd')" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply</button>
+                            <button onclick="clearDateFilter('teamProd')" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear</button>
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="setProdPreset(7)" class="export-btn text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-2.5 py-1.5">Last 7 Days</button>
+                                <button onclick="setProdPreset(30)" class="export-btn text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-2.5 py-1.5">Last 30 Days</button>
+                                <button onclick="setProdPreset('month')" class="export-btn text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-2.5 py-1.5">This Month</button>
+                            </div>
+                            <div class="ml-auto flex items-center gap-1 bg-slate-900/60 border border-slate-800 rounded-lg p-1">
+                                <button id="prod-type-line" onclick="setProdType('line')" class="text-[11px] font-semibold rounded-md px-3 py-1 text-white bg-indigo-600">Line</button>
+                                <button id="prod-type-bar" onclick="setProdType('bar')" class="text-[11px] font-semibold rounded-md px-3 py-1 text-slate-300">Stacked Bar</button>
+                            </div>
+                        </div>
+                        <div id="prod-chips" class="flex flex-wrap gap-2 mb-4"></div>
+                        <div class="h-80 relative">
+                            <canvas id="chart-team-prod"></canvas>
+                            <div id="prod-empty" class="hidden absolute inset-0 flex items-center justify-center text-sm text-slate-500">No approved entries in this date range.</div>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-3">Daily team total from approved Daily KRA entries only. Calling = Centers Done Calling · Fresh Audit / Cross Audit = Center count · Live Audit = Cases Found · CSR Audit = CSR count. Click a vertical above to show/hide it.</p>
+                    </div>
+                </div>
+
+                <!-- Employee-wise Daily Productivity -->
+                <div>
+                    <h3 class="text-xs font-bold text-sky-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-user-clock"></i> Employee-wise Daily Productivity
+                    </h3>
+                    <div class="chart-card p-4 rounded-2xl">
+                        <div class="flex flex-wrap items-end gap-3 mb-4">
+                            <div><label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">From</label>
+                                <input type="date" id="date-from-empProd" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white"></div>
+                            <div><label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">To</label>
+                                <input type="date" id="date-to-empProd" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white"></div>
+                            <button onclick="applyDateFilter('empProd')" class="text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-1.5">Apply</button>
+                            <button onclick="clearDateFilter('empProd')" class="text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-800">Clear</button>
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="setEmpPreset(7)" class="export-btn text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-2.5 py-1.5">Last 7 Days</button>
+                                <button onclick="setEmpPreset(30)" class="export-btn text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-2.5 py-1.5">Last 30 Days</button>
+                                <button onclick="setEmpPreset('month')" class="export-btn text-[11px] font-semibold text-slate-300 border border-slate-700 rounded-lg px-2.5 py-1.5">This Month</button>
+                            </div>
+                            <div class="ml-auto flex items-end gap-3">
+                                <div><label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">Vertical</label>
+                                    <select id="sel-empProd-vertical" onchange="renderEmpProd()" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white bg-slate-900">
+                                        <option value="all" selected>All Verticals</option><option value="live">Live Audit</option><option value="calling">Calling</option><option value="fresh">Fresh Audit</option><option value="cross">Cross Audit</option><option value="csr">CSR Audit</option>
+                                    </select></div>
+                                <div><label class="text-[10px] text-slate-400 font-semibold uppercase block mb-1">Employee</label>
+                                    <select id="sel-empProd-employee" onchange="renderEmpProd()" class="table-search text-xs rounded-lg px-2.5 py-1.5 text-white bg-slate-900"><option value="">All Employees</option></select></div>
+                            </div>
+                        </div>
+                        <div id="emp-prod-chips" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></div>
+                        <div class="h-80 relative">
+                            <canvas id="chart-emp-prod"></canvas>
+                            <div id="emp-prod-empty" class="hidden absolute inset-0 flex items-center justify-center text-sm text-slate-500">No approved entries for this vertical in this date range.</div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 font-semibold mt-6 mb-2">Live Audit — Shifts per Employee</p>
+                        <div class="relative" id="emp-shift-box" style="height:260px">
+                            <canvas id="chart-emp-shifts"></canvas>
+                            <div id="emp-shift-empty" class="hidden absolute inset-0 flex items-center justify-center text-sm text-slate-500">No Live Audit entries in this date range.</div>
+                        </div>
+                        <p id="emp-prod-note" class="text-[10px] text-slate-500 mt-3"></p>
+                    </div>
+                </div>
             </section>
 
             <!-- 2. CPM CALLING TAB -->
@@ -941,7 +1018,7 @@
         }
 
         // ---- Charts ----
-        let charts = { coverage: null, audit: null, employees: null, quality: null, qualityParam: null };
+        let charts = { coverage: null, audit: null, employees: null, quality: null, qualityParam: null, prod: null, prodType: null, empProd: null };
         const chartTextColor = '#94a3b8';
         const chartGridColor = 'rgba(255,255,255,0.06)';
 
@@ -1121,7 +1198,9 @@
             escalation: { from: '', to: '' },
             ranking: { from: '', to: '' },
             overallRank: { from: '', to: '' },
-            qualityScore: { from: '', to: '' }
+            qualityScore: { from: '', to: '' },
+            teamProd: { from: '', to: '' },
+            empProd: { from: '', to: '' }
         };
 
         function parseFlexibleDate(val) {
@@ -1201,7 +1280,7 @@
         function applyGlobalDateFilter() {
             const from = document.getElementById('date-from-global').value;
             const to = document.getElementById('date-to-global').value;
-            ['calling', 'liveAudit', 'projSub', 'empSummary', 'escalation', 'ranking', 'overallRank', 'qualityScore'].forEach(key => {
+            ['calling', 'liveAudit', 'projSub', 'empSummary', 'escalation', 'ranking', 'overallRank', 'qualityScore', 'teamProd', 'empProd'].forEach(key => {
                 const fEl = document.getElementById('date-from-' + key);
                 const tEl = document.getElementById('date-to-' + key);
                 if (fEl) fEl.value = from;
@@ -1228,6 +1307,8 @@
             if (key === 'ranking') renderRanking();
             if (key === 'overallRank') renderOverallRank();
             if (key === 'qualityScore') renderQualityScore();
+            if (key === 'teamProd') renderTeamProd();
+            if (key === 'empProd') renderEmpProd();
         }
 
         // 1. CALLING MODULE
@@ -1546,6 +1627,8 @@
             renderEmpSummary();
             renderRanking();
             renderOverallRank();
+            renderTeamProd();
+            renderEmpProd();
         }
 
         function renderEmpSummary() {
@@ -2130,6 +2213,349 @@
 
             document.getElementById('body-overallRank').innerHTML = bodyHtml ||
                 `<tr><td class="p-4 text-center text-slate-500" colspan="9">No entries in this date range.</td></tr>`;
+        }
+
+
+        // 8. TEAM PRODUCTIVITY TREND (Executive Summary) — day-wise team total per vertical, from Daily KRA
+        const PROD_VERTICALS = [
+            { key: 'calling', label: 'Calling',     color: '#6366f1' },
+            { key: 'fresh',   label: 'Fresh Audit', color: '#3b82f6' },
+            { key: 'cross',   label: 'Cross Audit', color: '#10b981' },
+            { key: 'live',    label: 'Live Audit',  color: '#f59e0b' },
+            { key: 'csr',     label: 'CSR Audit',   color: '#ec4899' }
+        ];
+        let prodHidden = {};
+        let prodChartType = 'line';
+
+        function prodParseInput(s) { // 'yyyy-mm-dd' -> local Date (avoids UTC shift)
+            const p = (s || '').split('-');
+            return p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]) : null;
+        }
+        function prodDayKey(d) {
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+        function prodDayLabel(d) {
+            return d.getDate() + ' ' + d.toLocaleString('en-GB', { month: 'short' });
+        }
+
+        function setProdPreset(p) {
+            const end = new Date(); end.setHours(0, 0, 0, 0);
+            const start = new Date(end);
+            if (p === 'month') start.setDate(1); else start.setDate(start.getDate() - (p - 1));
+            document.getElementById('date-from-teamProd').value = prodDayKey(start);
+            document.getElementById('date-to-teamProd').value = prodDayKey(end);
+            applyDateFilter('teamProd');
+        }
+        function setProdType(t) {
+            prodChartType = t;
+            document.getElementById('prod-type-line').className = 'text-[11px] font-semibold rounded-md px-3 py-1 ' + (t === 'line' ? 'text-white bg-indigo-600' : 'text-slate-300');
+            document.getElementById('prod-type-bar').className  = 'text-[11px] font-semibold rounded-md px-3 py-1 ' + (t === 'bar'  ? 'text-white bg-indigo-600' : 'text-slate-300');
+            renderTeamProd();
+        }
+        function toggleProdVertical(key) {
+            prodHidden[key] = !prodHidden[key];
+            renderTeamProd();
+        }
+
+        function renderTeamProd() {
+            const canvas = document.getElementById('chart-team-prod');
+            if (!canvas || typeof Chart === 'undefined') return;
+            const rows = rawRows.empSummary;
+            if (!rows || rows.length < 3) return;
+
+            const head = rows[1];
+            const find = (needle) => head.findIndex(h => h && h.toString().toLowerCase().includes(needle));
+            // Date column: fixed column C when its header says "date", otherwise auto-detect
+            let dateIdx = (head[2] && /date/i.test(head[2].toString())) ? 2 : find('date');
+            if (dateIdx === -1) dateIdx = 2;
+            const approvalIdx = find('approval status');
+            const verticalIdx = find('vertical');
+            const idx = {
+                calling: find('centers done calling'),
+                fresh: find('centers audit'),
+                cross: find('centers checked'),
+                live: find('cases found'),
+                csr: find('csr audit')
+            };
+            const noVerticalCol = verticalIdx === -1;
+            const from = dateFilters.teamProd.from, to = dateFilters.teamProd.to;
+
+            // Sum per day per vertical (approved rows only, each metric only from its own vertical's rows)
+            const perDay = {};
+            let minD = null, maxD = null;
+            for (let i = 2; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[0]) continue;
+                if (approvalIdx !== -1 && !(r[approvalIdx] || '').toString().trim().toLowerCase().includes('approved')) continue;
+                const d0 = parseFlexibleDate(r[dateIdx]);
+                if (!d0) continue; // a row without a valid date can't be placed on a day
+                if (!inDateRange(r[dateIdx], from, to)) continue;
+                const d = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate());
+                const k = prodDayKey(d);
+                if (!perDay[k]) perDay[k] = { calling: 0, fresh: 0, cross: 0, live: 0, csr: 0 };
+                const vertical = (!noVerticalCol && r[verticalIdx]) ? r[verticalIdx].toString().trim().toLowerCase() : '';
+                const p = perDay[k];
+                PROD_VERTICALS.forEach(v => {
+                    if (idx[v.key] !== -1 && (noVerticalCol || vertical.includes(v.key))) p[v.key] += Number(r[idx[v.key]]) || 0;
+                });
+                if (!minD || d < minD) minD = d;
+                if (!maxD || d > maxD) maxD = d;
+            }
+
+            const chipsEl = document.getElementById('prod-chips');
+            const emptyEl = document.getElementById('prod-empty');
+            if (!minD) {
+                emptyEl.classList.remove('hidden');
+                chipsEl.innerHTML = '';
+                if (charts.prod) { charts.prod.destroy(); charts.prod = null; }
+                return;
+            }
+            emptyEl.classList.add('hidden');
+
+            // Continuous day axis (days with no entries show as 0), capped at 366 days
+            let start = from ? prodParseInput(from) : minD;
+            let end = to ? prodParseInput(to) : maxD;
+            if (!start || !end || start > end) { start = minD; end = maxD; }
+            if ((end - start) / 86400000 > 365) start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 365);
+
+            const labels = [], series = {};
+            PROD_VERTICALS.forEach(v => series[v.key] = []);
+            const dayDates = [];
+            for (let d = new Date(start); d <= end; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+                const row = perDay[prodDayKey(d)] || {};
+                labels.push(prodDayLabel(d));
+                dayDates.push(new Date(d));
+                PROD_VERTICALS.forEach(v => series[v.key].push(row[v.key] || 0));
+            }
+
+            // Summary chips: period total + peak day per vertical (click to show/hide)
+            chipsEl.innerHTML = PROD_VERTICALS.map(v => {
+                const arr = series[v.key];
+                const total = arr.reduce((a, b) => a + b, 0);
+                let peakVal = 0, peakIdx = -1;
+                arr.forEach((x, i) => { if (x > peakVal) { peakVal = x; peakIdx = i; } });
+                const peak = peakIdx === -1 ? 'No activity' : 'Peak: ' + labels[peakIdx] + ' (' + peakVal.toLocaleString() + ')';
+                return `<button onclick="toggleProdVertical('${v.key}')" class="text-left rounded-xl px-3 py-2 border border-slate-700/70 bg-slate-900/50 hover:bg-slate-800/70 transition ${prodHidden[v.key] ? 'opacity-40' : ''}" style="border-left:4px solid ${v.color}">
+                    <span class="block text-[10px] text-slate-400 font-semibold uppercase">${v.label}</span>
+                    <span class="block text-base font-extrabold text-white leading-tight">${total.toLocaleString()}</span>
+                    <span class="block text-[10px] text-slate-500">${peak}</span>
+                </button>`;
+            }).join('');
+
+            const dayCount = labels.length;
+            const visible = PROD_VERTICALS.filter(v => !prodHidden[v.key]);
+            const isBar = prodChartType === 'bar';
+            const axes = (stacked) => ({
+                x: { stacked, ticks: { color: chartTextColor, font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 16 }, grid: { display: false } },
+                y: { stacked, beginAtZero: true, ticks: { color: chartTextColor }, grid: { color: chartGridColor }, title: { display: true, text: 'Team total per day', color: chartTextColor, font: { size: 10 } } }
+            });
+            let cfg;
+            if (dayCount === 1) {
+                // One day = nothing for a line to connect, so show one bar per vertical with its value on top
+                cfg = {
+                    type: 'bar',
+                    data: { labels: visible.map(v => v.label), datasets: [{ data: visible.map(v => series[v.key][0]), backgroundColor: visible.map(v => v.color), borderRadius: 8, maxBarThickness: 80 }] },
+                    options: { plugins: { legend: { display: false }, title: { display: true, text: 'Team productivity — ' + labels[0], color: '#cbd5e1', font: { size: 12 } }, valueLabels: { display: true } }, scales: axes(false) }
+                };
+            } else {
+                const datasets = PROD_VERTICALS.map(v => ({
+                    label: v.label, data: series[v.key], hidden: !!prodHidden[v.key],
+                    borderColor: v.color, backgroundColor: isBar ? v.color : v.color + '33',
+                    borderWidth: 2, tension: 0.3, pointRadius: dayCount > 45 ? 0 : 3, pointHoverRadius: 5,
+                    borderRadius: isBar ? 3 : 0, maxBarThickness: 28, fill: false
+                }));
+                cfg = {
+                    type: isBar ? 'bar' : 'line',
+                    data: { labels, datasets },
+                    options: {
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(15,23,42,0.95)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 } },
+                        scales: axes(isBar)
+                    }
+                };
+            }
+            cfg.options.responsive = true; cfg.options.maintainAspectRatio = false;
+            cfg.plugins = [valueLabelPlugin];
+            if (charts.prod) charts.prod.destroy();
+            charts.prod = new Chart(canvas, cfg);
+        }
+
+        // Draws the value on top of (or beside, for horizontal) each bar when options.plugins.valueLabels.display is set
+        const valueLabelPlugin = {
+            id: 'valueLabels',
+            afterDatasetsDraw(chart, args, opts) {
+                if (!opts || !opts.display) return;
+                const ctx = chart.ctx, horiz = chart.options.indexAxis === 'y';
+                ctx.save(); ctx.fillStyle = '#e2e8f0'; ctx.font = '600 11px sans-serif';
+                ctx.textAlign = horiz ? 'left' : 'center'; ctx.textBaseline = horiz ? 'middle' : 'bottom';
+                chart.data.datasets.forEach((ds, i) => {
+                    chart.getDatasetMeta(i).data.forEach((el, j) => {
+                        if (ds.data[j] == null) return;
+                        const t = Number(ds.data[j]).toLocaleString();
+                        if (horiz) ctx.fillText(t, el.x + 6, el.y); else ctx.fillText(t, el.x, el.y - 4);
+                    });
+                });
+                ctx.restore();
+            }
+        };
+
+        // 9. EMPLOYEE-WISE DAILY PRODUCTIVITY (Executive Summary) — chart + day-wise heatmap, from Daily KRA
+        const EMP_COLORS = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6', '#ef4444', '#84cc16', '#f97316', '#14b8a6', '#a855f7', '#eab308', '#0ea5e9', '#f43f5e'];
+        const escHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const hexA = (hex, a) => hex + Math.round(a * 255).toString(16).padStart(2, '0');
+
+        function setEmpPreset(p) {
+            const end = new Date(); end.setHours(0, 0, 0, 0);
+            const s = new Date(end);
+            if (p === 'month') s.setDate(1); else s.setDate(s.getDate() - (p - 1));
+            document.getElementById('date-from-empProd').value = prodDayKey(s);
+            document.getElementById('date-to-empProd').value = prodDayKey(end);
+            applyDateFilter('empProd');
+        }
+
+        function renderEmpProd() {
+            const canvas = document.getElementById('chart-emp-prod');
+            const rows = rawRows.empSummary;
+            if (!canvas || typeof Chart === 'undefined' || !rows || rows.length < 3) return;
+            const head = rows[1];
+            const find = (n) => head.findIndex(h => h && h.toString().toLowerCase().includes(n));
+            let dateIdx = (head[2] && /date/i.test(head[2].toString())) ? 2 : find('date');
+            if (dateIdx === -1) dateIdx = 2;
+            const nameIdx = find('employee name'), approvalIdx = find('approval status'), verticalIdx = find('vertical'), shiftIdx = find('shift');
+            const mIdx = { calling: find('centers done calling'), fresh: find('centers audit'), cross: find('centers checked'), live: find('cases found'), csr: find('csr audit') };
+            const vSel = document.getElementById('sel-empProd-vertical').value;
+            const eSel = document.getElementById('sel-empProd-employee').value;
+            const isAll = vSel === 'all';
+            const vList = isAll ? PROD_VERTICALS : PROD_VERTICALS.filter(v => v.key === vSel);
+            const hasShift = shiftIdx !== -1, noVerticalCol = verticalIdx === -1;
+            const { from, to } = dateFilters.empProd;
+
+            const allNames = new Set(), data = {}, shiftSets = {};
+            let minD = null, maxD = null;
+            for (let i = 2; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r[0]) continue;
+                const name = (nameIdx !== -1 && r[nameIdx]) ? r[nameIdx].toString().trim() : 'Unknown';
+                allNames.add(name);
+                if (approvalIdx !== -1 && !(r[approvalIdx] || '').toString().trim().toLowerCase().includes('approved')) continue;
+                const d0 = parseFlexibleDate(r[dateIdx]);
+                if (!d0 || !inDateRange(r[dateIdx], from, to)) continue;
+                if (eSel && name !== eSel) continue;
+                const vertical = (!noVerticalCol && r[verticalIdx]) ? r[verticalIdx].toString().trim().toLowerCase() : '';
+                const d = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate()), k = prodDayKey(d);
+                const isLiveRow = noVerticalCol || vertical.includes('live');
+                const matched = vList.filter(v => noVerticalCol || vertical.includes(v.key));
+                if (isLiveRow) {
+                    if (!shiftSets[name]) shiftSets[name] = new Set();
+                    shiftSets[name].add(k + '|' + ((hasShift && r[shiftIdx]) ? r[shiftIdx].toString().trim() : 'entry' + i));
+                }
+                if (!matched.length) continue;
+                if (!data[name]) data[name] = {};
+                if (!data[name][k]) data[name][k] = {};
+                matched.forEach(v => { if (mIdx[v.key] !== -1) data[name][k][v.key] = (data[name][k][v.key] || 0) + (Number(r[mIdx[v.key]]) || 0); });
+                if (!minD || d < minD) minD = d;
+                if (!maxD || d > maxD) maxD = d;
+            }
+
+            const sel = document.getElementById('sel-empProd-employee');
+            const names = [...allNames].sort((a, b) => a.localeCompare(b));
+            if (sel.options.length !== names.length + 1) {
+                sel.innerHTML = '<option value="">All Employees</option>' + names.map(n => `<option value="${escHtml(n)}">${escHtml(n)}</option>`).join('');
+                sel.value = names.includes(eSel) ? eSel : '';
+            }
+
+            const TT = { backgroundColor: 'rgba(15,23,42,0.95)', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 };
+            const tick = { color: chartTextColor, font: { size: 10 } };
+            const title = (t) => ({ display: true, text: t, color: '#cbd5e1', font: { size: 12 } });
+            const legend = (on) => ({ display: on, position: 'bottom', labels: { color: chartTextColor, boxWidth: 10, font: { size: 10 } } });
+            const box = canvas.parentElement, chipsEl = document.getElementById('emp-prod-chips'), emptyEl = document.getElementById('emp-prod-empty');
+
+            // ---- Graph 2: Live Audit shifts per employee (simple horizontal bars)
+            const sh = Object.keys(shiftSets).map(n => [n, shiftSets[n].size]).sort((a, b) => b[1] - a[1]);
+            const shBox = document.getElementById('emp-shift-box'), shEmpty = document.getElementById('emp-shift-empty');
+            if (charts.empShifts) { charts.empShifts.destroy(); charts.empShifts = null; }
+            shEmpty.classList.toggle('hidden', sh.length > 0);
+            if (sh.length) {
+                shBox.style.height = Math.max(200, sh.length * 26 + 50) + 'px';
+                charts.empShifts = new Chart(document.getElementById('chart-emp-shifts'), {
+                    type: 'bar', plugins: [valueLabelPlugin],
+                    data: { labels: sh.map(x => x[0]), datasets: [{ label: hasShift ? 'Shifts' : 'Entries', data: sh.map(x => x[1]), backgroundColor: '#f59e0b', borderRadius: 6, maxBarThickness: 20 }] },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, layout: { padding: { right: 24 } },
+                        plugins: { legend: { display: false }, tooltip: TT, valueLabels: { display: true } },
+                        scales: { x: { beginAtZero: true, ticks: { ...tick, precision: 0 }, grid: { color: chartGridColor }, title: { display: true, text: hasShift ? 'Shifts worked on Live Audit' : 'Live Audit entries', color: chartTextColor, font: { size: 10 } } }, y: { ticks: tick, grid: { display: false } } } }
+                });
+            }
+            document.getElementById('emp-prod-note').innerText = hasShift ? 'Shifts = distinct date + shift combinations in which the employee did Live Audit. Approved Daily KRA entries only.' : "Daily KRA sheet me 'Shift' column nahi mila, isliye Live Audit ki approved entries count ho rahi hain. Approved Daily KRA entries only.";
+
+            // ---- Graph 1: productivity
+            if (!minD) {
+                emptyEl.classList.remove('hidden'); chipsEl.innerHTML = '';
+                if (charts.empProd) { charts.empProd.destroy(); charts.empProd = null; }
+                return;
+            }
+            emptyEl.classList.add('hidden');
+            let start = from ? prodParseInput(from) : minD, end = to ? prodParseInput(to) : maxD;
+            if (!start || !end || start > end) { start = minD; end = maxD; }
+            if ((end - start) / 86400000 > 120) start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 120);
+            const keys = [], labels = [];
+            for (let d = new Date(start); d <= end; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) { keys.push(prodDayKey(d)); labels.push(prodDayLabel(d)); }
+
+            const emps = Object.keys(data).map(n => {
+                const t = {}; let total = 0, active = 0;
+                vList.forEach(v => t[v.key] = 0);
+                keys.forEach(k => { const c = data[n][k]; if (!c) return; let day = 0; vList.forEach(v => { t[v.key] += c[v.key] || 0; day += c[v.key] || 0; }); total += day; if (day > 0) active++; });
+                return { n, t, total, active };
+            }).sort((a, b) => b.total - a.total || a.n.localeCompare(b.n));
+            const vTot = {}; vList.forEach(v => vTot[v.key] = emps.reduce((a, e) => a + e.t[v.key], 0));
+            const dayTot = (v) => keys.map(k => emps.reduce((a, e) => a + ((data[e.n][k] && data[e.n][k][v.key]) || 0), 0));
+
+            const chip = (c, t, v, s) => `<div class="rounded-xl px-3 py-2 border border-slate-700/70 bg-slate-900/50" style="border-left:4px solid ${c}"><span class="block text-[10px] text-slate-400 font-semibold uppercase">${t}</span><span class="block text-base font-extrabold text-white leading-tight truncate">${v}</span><span class="block text-[10px] text-slate-500 truncate">${s}</span></div>`;
+            if (isAll) {
+                chipsEl.className = 'grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4';
+                chipsEl.innerHTML = vList.map(v => chip(v.color, v.label, vTot[v.key].toLocaleString(), emps.filter(e => e.t[v.key] > 0).length + ' employee(s)')).join('');
+            } else {
+                const V = vList[0], act = emps.filter(e => e.total > 0);
+                chipsEl.className = 'grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4';
+                chipsEl.innerHTML = chip(V.color, 'Total ' + V.label, vTot[V.key].toLocaleString(), keys.length + ' day(s)') +
+                    chip(V.color, 'Active Employees', act.length + ' / ' + emps.length, 'with output in range') +
+                    chip(V.color, 'Top Performer', escHtml(emps[0].n), emps[0].total.toLocaleString() + ' ' + V.label.toLowerCase()) +
+                    chip(V.color, 'Avg / Employee', (vTot[V.key] / Math.max(1, act.length)).toFixed(1), 'active employees only');
+            }
+
+            const lbl = { display: true };
+            let cfg, horiz = false;
+            const hScales = (stacked) => ({ x: { stacked, beginAtZero: true, ticks: tick, grid: { color: chartGridColor } }, y: { stacked, ticks: tick, grid: { display: false } } });
+            const vScales = (stacked, t) => ({ x: { stacked, ticks: { ...tick, maxRotation: 0, autoSkip: true, maxTicksLimit: 16 }, grid: { display: false } }, y: { stacked, beginAtZero: true, ticks: { color: chartTextColor }, grid: { color: chartGridColor }, title: { display: true, text: t, color: chartTextColor, font: { size: 10 } } } });
+            const footer = (axis) => ({ footer: items => 'Total: ' + items.reduce((a, it) => a + it.parsed[axis], 0).toLocaleString() });
+
+            if (isAll && !eSel) {
+                // All verticals, all employees: one bar per employee, split by vertical
+                horiz = true;
+                cfg = { type: 'bar', data: { labels: emps.map(e => e.n), datasets: vList.map(v => ({ label: v.label, data: emps.map(e => e.t[v.key]), backgroundColor: v.color, borderRadius: 3, maxBarThickness: 22 })) },
+                    options: { indexAxis: 'y', plugins: { title: title('Employee-wise productivity by vertical — ' + (keys.length === 1 ? labels[0] : labels[0] + ' to ' + labels[labels.length - 1])), legend: legend(true), tooltip: { ...TT, filter: it => it.parsed.x > 0, callbacks: footer('x') } }, scales: hScales(true) } };
+            } else if (isAll) {
+                // All verticals, one employee: day-wise
+                if (keys.length === 1) {
+                    cfg = { type: 'bar', data: { labels: vList.map(v => v.label), datasets: [{ data: vList.map(v => vTot[v.key]), backgroundColor: vList.map(v => v.color), borderRadius: 8, maxBarThickness: 80 }] },
+                        options: { plugins: { title: title(eSel + ' — ' + labels[0]), legend: { display: false }, valueLabels: lbl }, scales: vScales(false, 'Count') } };
+                } else {
+                    cfg = { type: 'bar', data: { labels, datasets: vList.map(v => ({ label: v.label, data: dayTot(v), backgroundColor: v.color, borderRadius: 2, maxBarThickness: 34 })) },
+                        options: { interaction: { mode: 'index', intersect: false }, plugins: { title: title(eSel + ' — day-wise productivity'), legend: legend(true), tooltip: { ...TT, filter: it => it.parsed.y > 0, callbacks: footer('y') } }, scales: vScales(true, 'Count per day') } };
+                }
+            } else if (keys.length === 1) {
+                const V = vList[0]; horiz = true;
+                cfg = { type: 'bar', data: { labels: emps.map(e => e.n), datasets: [{ label: V.label, data: emps.map(e => e.total), backgroundColor: V.color, borderRadius: 6, maxBarThickness: 22 }] },
+                    options: { indexAxis: 'y', layout: { padding: { right: 24 } }, plugins: { title: title(V.label + ' by employee — ' + labels[0]), legend: { display: false }, valueLabels: lbl }, scales: hScales(false) } };
+            } else {
+                const V = vList[0];
+                cfg = { type: 'bar', data: { labels, datasets: emps.map((e, i) => ({ label: e.n, data: keys.map(k => (data[e.n][k] && data[e.n][k][V.key]) || 0), backgroundColor: EMP_COLORS[i % EMP_COLORS.length], borderRadius: 2, maxBarThickness: 34 })) },
+                    options: { interaction: { mode: 'index', intersect: false }, plugins: { title: title(V.label + ' — day-wise, employee-wise'), legend: legend(emps.length <= 15), tooltip: { ...TT, filter: it => it.parsed.y > 0, itemSort: (a, b) => b.parsed.y - a.parsed.y, callbacks: footer('y') } }, scales: vScales(true, V.label + ' per day') } };
+            }
+            box.style.height = horiz ? Math.max(320, emps.length * 26 + 90) + 'px' : '320px';
+            cfg.options.responsive = true; cfg.options.maintainAspectRatio = false;
+            cfg.plugins = [valueLabelPlugin];
+            if (charts.empProd) charts.empProd.destroy();
+            charts.empProd = new Chart(canvas, cfg);
         }
 
         window.onload = function() {
